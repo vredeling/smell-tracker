@@ -8,6 +8,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Geurtracker">
   <meta name="theme-color" content="#16213e">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌬️</text></svg>">
   <link rel="manifest" id="manifest-link">
   <title>Amsterdam Geurtracker</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
@@ -27,18 +28,21 @@
     #wind-widget{background:rgba(22,33,62,.92);border:1px solid #0f3460;border-radius:12px;padding:10px 12px;text-align:center;cursor:default;user-select:none}
     .complaint-btn{margin-left:10px;padding:4px 10px;background:#e94560;color:#fff;border-radius:5px;font-weight:600;font-size:.8rem;text-decoration:none;white-space:nowrap;display:inline-block}
     .complaint-btn:hover{opacity:.85}
-    #time-slider{display:none;position:absolute;bottom:36px;left:50%;transform:translateX(-50%);
+    #time-slider{display:none;position:absolute;bottom:28px;left:50%;transform:translateX(-50%);
       z-index:1000;background:rgba(22,33,62,.95);border:1px solid #0f3460;border-radius:10px;
-      padding:9px 18px 7px;min-width:300px;max-width:88%;text-align:center;pointer-events:auto}
+      padding:9px 18px 7px;min-width:300px;max-width:calc(100% - 128px);text-align:center;pointer-events:auto}
+    @media (max-width:500px){
+      #time-slider{left:10px;right:118px;transform:none;min-width:0;max-width:none}
+    }
     #slider-label{color:#e4940d;font-size:.82rem;font-weight:700;margin-bottom:5px;letter-spacing:.03em}
     #time-range{width:100%;accent-color:#e4940d;cursor:pointer;height:4px}
     #slider-ticks{display:flex;justify-content:space-between;margin-top:4px}
     #slider-ticks span{color:#445;font-size:.68rem}
     #slider-ticks span.active{color:#e4940d;font-weight:700}
     #sources-wrap{position:relative}
-    #sources-panel{display:none;position:absolute;top:calc(100% + 6px);right:0;
+    #sources-panel{display:none;position:fixed;top:auto;left:50%;transform:translateX(-50%);
       background:#16213e;border:1px solid #0f3460;border-radius:10px;
-      padding:10px 14px;z-index:2000;min-width:220px;box-shadow:0 4px 16px rgba(0,0,0,.5)}
+      padding:10px 14px;z-index:9999;min-width:220px;max-width:90vw;box-shadow:0 4px 16px rgba(0,0,0,.5)}
     #sources-panel.open{display:block}
     .src-row{display:flex;align-items:center;gap:8px;padding:5px 0}
     .src-row:not(:last-child){border-bottom:1px solid #1a3a6e}
@@ -341,7 +345,12 @@
   }
 
   function toggleSourcesPanel() {
-    document.getElementById('sources-panel').classList.toggle('open');
+    const panel = document.getElementById('sources-panel');
+    if (!panel.classList.contains('open')) {
+      const bottom = document.getElementById('hdr').getBoundingClientRect().bottom;
+      panel.style.top = (bottom + 6) + 'px';
+    }
+    panel.classList.toggle('open');
   }
 
   document.addEventListener('click', e => {
