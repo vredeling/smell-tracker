@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Geurtracker">
+  <meta name="theme-color" content="#16213e">
+  <link rel="manifest" id="manifest-link">
+  <title>Amsterdam Geurtracker</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%;font-family:-apple-system,sans-serif;background:#1a1a2e;color:#eee;display:flex;flex-direction:column}
+    #hdr{padding:10px 14px;background:#16213e;border-bottom:1px solid #0f3460;display:flex;gap:8px;align-items:center;flex-wrap:wrap;z-index:1000}
+    #hdr strong{color:#e94560;white-space:nowrap}
+    #qry{flex:1;min-width:160px;padding:6px 10px;border-radius:6px;border:1px solid #0f3460;background:#0f3460;color:#eee;font-size:.83rem;outline:none}
+    .btn{padding:6px 13px;border-radius:6px;border:none;cursor:pointer;font-weight:600;font-size:.82rem}
+    #map{flex:1;position:relative}
+    #bar{padding:10px 16px;background:#16213e;border-top:1px solid #0f3460;min-height:50px;font-size:.88rem;display:flex;align-items:center;flex-wrap:wrap;gap:6px}
+    .leaflet-popup-content-wrapper{background:#16213e!important;color:#eee!important;border:1px solid #0f3460!important;border-radius:8px!important}
+    .leaflet-popup-tip{background:#16213e!important}
+    .leaflet-popup-content{font-size:.83rem;line-height:1.5}
+    #wind-widget{background:rgba(22,33,62,.92);border:1px solid #0f3460;border-radius:12px;padding:10px 12px;text-align:center;cursor:default;user-select:none}
+    .complaint-btn{margin-left:10px;padding:4px 10px;background:#e94560;color:#fff;border-radius:5px;font-weight:600;font-size:.8rem;text-decoration:none;white-space:nowrap;display:inline-block}
+    .complaint-btn:hover{opacity:.85}
+    #time-slider{display:none;position:absolute;bottom:36px;left:50%;transform:translateX(-50%);
+      z-index:1000;background:rgba(22,33,62,.95);border:1px solid #0f3460;border-radius:10px;
+      padding:9px 18px 7px;min-width:300px;max-width:88%;text-align:center;pointer-events:auto}
+    #slider-label{color:#e4940d;font-size:.82rem;font-weight:700;margin-bottom:5px;letter-spacing:.03em}
+    #time-range{width:100%;accent-color:#e4940d;cursor:pointer;height:4px}
+    #slider-ticks{display:flex;justify-content:space-between;margin-top:4px}
+    #slider-ticks span{color:#445;font-size:.68rem}
+    #slider-ticks span.active{color:#e4940d;font-weight:700}
+  </style>
+</head>
+<body>
+
+<div id="hdr">
+  <strong id="t-title">🌬️ Amsterdam Geurtracker</strong>
+  <input id="qry" placeholder="Voer een adres in…"/>
+  <button class="btn" style="background:#e94560;color:#fff" onclick="doSearch()" id="t-search">Zoeken</button>
+  <button class="btn" style="background:#0f3460;color:#eee" onclick="doGeo()" id="t-geo">📍 Mijn locatie</button>
+  <button class="btn" style="background:#1a1a2e;color:#aaa;border:1px solid #0f3460" onclick="toggleLang()" id="lang-btn">NL</button>
+</div>
+<div id="map"></div>
+<div id="bar"></div>
+
+<script>
+  // ═══════════════════════════════════════════════════════════════════
+  // TRANSLATIONS
+  // ═══════════════════════════════════════════════════════════════════
+  const LANG = {
+    nl: {
+      title:       '🌬️ Amsterdam Geurtracker',
+      placeholder: 'Voer een adres in…',
+      search:      'Zoeken',
+      geo:         '📍 Mijn locatie',
+      init:        '👆 Voer een adres in of klik op <b>📍 Mijn locatie</b> om te beginnen.',
+      locating:    '📍 GPS-positie bepalen…',
+      geodenied:   '⚠️ Toegang tot locatie geweigerd.',
+      geonosup:    'Geolocatie wordt niet ondersteund.',
+      searching:   q => `🔍 Zoeken naar "${q}"…`,
+      notfound:    e => `⚠️ Locatie niet gevonden: ${e}`,
+      windfetch:   n => `⏳ Winddata ophalen voor ${n}…`,
+      windfail:    e => `⚠️ Winddata ophalen mislukt: ${e} — <a href="#" onclick="loadWind();return false" style="color:#7ed6df">Opnieuw</a>`,
+      none:        '✅ Geen van de bekende bronnen staat direct bovenstrooms.',
+      nonedetail:  'De geur heeft mogelijk een andere oorzaak, of de wind is recent gedraaid.',
+      multi:       '⚠️ Meerdere bronnen bovenstrooms:',
+      multimix:    'mogelijk een mengeling van',
+      source:      'is de meest waarschijnlijke bron — verwacht een geur van',
+      windmeta:    (dir,deg,spd,ha) => `${dir} (${deg}°), ${spd} m/s, pluim ±${ha}°`,
+      gpsloc:      'Jouw GPS-locatie',
+      complaint:   '📢 Meld overlast',
+      sliderNow:   'Nu',
+      sliderPast:  m => m < 60 ? `-${m} min` : (m%60===0 ? `-${m/60} uur` : `-${Math.floor(m/60)}u ${m%60}`),
+      dirs: ['N','NNO','NO','ONO','O','OZO','ZO','ZZO','Z','ZZW','ZW','WZW','W','WNW','NW','NNW'],
+      east: 'O'
+    },
+    en: {
+      title:       '🌬️ Amsterdam Smell Tracker',
+      placeholder: 'Enter an address…',
+      search:      'Search',
+      geo:         '📍 My Location',
+      init:        '👆 Enter an address above or click <b>📍 My Location</b> to start.',
+      locating:    '📍 Getting GPS position…',
+      geodenied:   '⚠️ Location access denied.',
+      geonosup:    'Geolocation not supported.',
+      searching:   q => `🔍 Searching for "${q}"…`,
+      notfound:    e => `⚠️ Location not found: ${e}`,
+      windfetch:   n => `⏳ Fetching live wind near ${n}…`,
+      windfail:    e => `⚠️ Wind fetch failed: ${e} — <a href="#" onclick="loadWind();return false" style="color:#7ed6df">Retry</a>`,
+      none:        '✅ None of the known sources are directly upwind.',
+      nonedetail:  'The smell may have another cause, or the wind has recently shifted.',
+      multi:       '⚠️ Multiple sources upwind:',
+      multimix:    'you may be smelling a mix of',
+      source:      'is the most likely source — expect',
+      windmeta:    (dir,deg,spd,ha) => `${dir} (${deg}°), ${spd} m/s, plume ±${ha}°`,
+      gpsloc:      'Your GPS location',
+      complaint:   '📢 Report complaint',
+      sliderNow:   'Now',
+      sliderPast:  m => m < 60 ? `-${m} min` : (m%60===0 ? `-${m/60} hr` : `-${Math.floor(m/60)}h ${m%60}`),
+      dirs: ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'],
+      east: 'E'
+    }
+  };
+
+  let lang = 'nl';
+  try { lang = localStorage.getItem('smellLang') || 'nl'; } catch(e) {}
+
+  function T()         { return LANG[lang] || LANG.nl; }
+  function tDirs()     { return T().dirs || LANG.nl.dirs; }
+  function dname(deg)  { return tDirs()[Math.round(deg/22.5)%16]; }
+  function getSmell(s) { return (s && s.smell && (s.smell[lang] || s.smell.nl)) || '?'; }
+  function setBar(h)   { document.getElementById('bar').innerHTML = h; }
+
+  function complaintBtn() {
+    return `<a class="complaint-btn" href="https://overlast.odnzkg.nl/" target="_blank" rel="noopener">${T().complaint}</a>`;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // SOURCES
+  // ═══════════════════════════════════════════════════════════════════
+  const SOURCES = [
+    {
+      key: 'ICL', name: 'ICL Fertiliser', lat: 52.405573809228095, lng: 4.872616230074212, color: '#e4940d',
+      smell: { nl: 'rotte eieren / zwavel', en: 'rotten eggs / sulphur' },
+    },
+    {
+      key: 'BUNGE', name: 'Bunge', lat: 52.401652066660496, lng: 4.864216945287884, color: '#0ccbde',
+      smell: { nl: 'olieachtig / vettig / zaadverwerking', en: 'oily / fatty / seed-processing' },
+    },
+    {
+      key: 'AEB', name: 'Afval Energie Bedrijf', lat: 52.400757, lng: 4.796737, color: '#8834cc',
+      smell: { nl: 'verbrand / afvalverbranding', en: 'burnt / waste incineration' },
+    },
+    {
+      key: 'BENZINE', name: 'Benzine Terminal', lat: 52.412988, lng: 4.851795, color: '#ca1e66',
+      smell: { nl: 'benzine / koolwaterstof', en: 'petrol / hydrocarbon' },
+    },
+  ];
+
+  // ═══════════════════════════════════════════════════════════════════
+  // MAP
+  // ═══════════════════════════════════════════════════════════════════
+  const map = L.map('map').setView([52.4086, 4.9068], 12);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    maxZoom:19
+  }).addTo(map);
+
+  function circleIcon(color, size) {
+    return L.divIcon({
+      className:'',
+      html:`<div style="width:${size}px;height:${size}px;border-radius:50%;background:${color};border:2px solid #fff;box-shadow:0 0 8px ${color}88"></div>`,
+      iconAnchor:[size/2,size/2]
+    });
+  }
+  SOURCES.forEach(s => {
+    L.marker([s.lat,s.lng],{icon:circleIcon(s.color,16)}).addTo(map)
+      .bindPopup(`<b style="color:${s.color}">${s.name}</b><br><span style="color:#aaa">${getSmell(s)}</span>`);
+  });
+
+  let userMarker = null;
+  let coneLayers = [];
+  let arrowLayer = null;
+  let lastWind   = null;
+  let loc        = null;
+
+  // ═══════════════════════════════════════════════════════════════════
+  // TIME SLIDER
+  // ═══════════════════════════════════════════════════════════════════
+  // 7 steps: 0=now, 1=-30m, 2=-1h, 3=-1h30, 4=-2h, 5=-2h30, 6=-3h
+  const STEPS      = 6;
+  const STEP_MINS  = 30;
+  let windHistory  = [];   // hourly readings: [now, -1h, -2h, -3h]
+  let currentStep  = 0;
+  let animFrame    = null;
+  let displayWind  = null; // what's currently drawn
+
+  // Inject slider into map container
+  const sliderEl = document.createElement('div');
+  sliderEl.id = 'time-slider';
+  sliderEl.innerHTML = `
+  <div id="slider-label">Nu</div>
+  <input type="range" id="time-range" min="0" max="${STEPS}" step="1" value="${STEPS}">
+  <div id="slider-ticks"></div>`;
+  map.getContainer().appendChild(sliderEl);
+  L.DomEvent.disableClickPropagation(sliderEl);
+  L.DomEvent.disableScrollPropagation(sliderEl);
+
+  function buildSliderTicks() {
+    const ticks = document.getElementById('slider-ticks');
+    if (!ticks) return;
+    ticks.innerHTML = '';
+    for (let i = STEPS; i >= 0; i--) {
+      const mins = i * STEP_MINS;
+      const lbl  = mins === 0 ? T().sliderNow : T().sliderPast(mins);
+      const sp   = document.createElement('span');
+      sp.textContent   = lbl;
+      sp.dataset.step  = i;
+      if (i === currentStep) sp.classList.add('active');
+      ticks.appendChild(sp);
+    }
+  }
+
+  function updateSliderLabel(step) {
+    const mins = step * STEP_MINS;
+    const lbl  = mins === 0 ? T().sliderNow : T().sliderPast(mins);
+    const el   = document.getElementById('slider-label');
+    if (el) el.textContent = lbl;
+    // update tick highlights
+    document.querySelectorAll('#slider-ticks span').forEach(sp => {
+      sp.classList.toggle('active', parseInt(sp.dataset.step) === step);
+    });
+  }
+
+  function showSlider() {
+    sliderEl.style.display = 'block';
+    buildSliderTicks();
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // WIND WIDGET
+  // ═══════════════════════════════════════════════════════════════════
+  function msToBeaufort(ms) {
+    return [0.3,1.6,3.4,5.5,8.0,10.8,13.9,17.2,20.8,24.5,28.5,32.7].findIndex(v => ms < v);
+  }
+
+  const WindControl = L.Control.extend({
+    options:{ position:'bottomright' },
+    onAdd() {
+      const div = L.DomUtil.create('div','');
+      div.id = 'wind-widget';
+      div.innerHTML = `
+      <svg width="72" height="72" viewBox="-36 -36 72 72">
+        <circle r="30" fill="none" stroke="#0f3460" stroke-width="1.5"/>
+        <text id="wi-n" y="-19" text-anchor="middle" fill="#556" font-size="8" font-family="sans-serif">N</text>
+        <text id="wi-s" y="25"  text-anchor="middle" fill="#556" font-size="8" font-family="sans-serif">Z</text>
+        <text id="wi-w" x="-22" y="4"  text-anchor="middle" fill="#556" font-size="8" font-family="sans-serif">W</text>
+        <text id="wi-e" x="22"  y="4"  text-anchor="middle" fill="#556" font-size="8" font-family="sans-serif">O</text>
+        <g id="wind-arrow-group">
+          <line x1="0" y1="18" x2="0" y2="-16" stroke="#e4940d" stroke-width="3" stroke-linecap="round"/>
+          <polygon points="0,-24 -7,-12 7,-12" fill="#e4940d"/>
+          <circle r="3.5" fill="#e4940d"/>
+        </g>
+      </svg>
+      <div id="wi-speed" style="color:#eee;font-size:12px;font-weight:700;margin-top:2px;min-width:70px;text-align:center">—</div>
+      <div id="wi-bft"   style="color:#aaa;font-size:10px;min-width:70px;text-align:center">—</div>
+      <div id="wi-dir"   style="color:#aaa;font-size:10px;min-width:70px;text-align:center">—</div>`;
+      L.DomEvent.disableClickPropagation(div);
+      return div;
+    }
+  });
+  new WindControl().addTo(map);
+
+  function updateWindWidget(windFrom, ws) {
+    const d      = tDirs();
+    const bft    = msToBeaufort(ws);
+    const windTo = (windFrom+180)%360;
+    const dirRounded = Math.round(windFrom);
+    const spdRounded = Math.round(ws * 10) / 10; // 1 decimal, stable width
+    document.getElementById('wind-arrow-group').setAttribute('transform',`rotate(${windTo})`);
+    document.getElementById('wi-speed').textContent = `${spdRounded.toFixed(1)} m/s`;
+    document.getElementById('wi-bft').textContent   = `Bft ${bft}`;
+    document.getElementById('wi-dir').textContent   = `${d[Math.round(dirRounded/22.5)%16]} (${dirRounded}°)`;
+    document.getElementById('wi-n').textContent     = d[0];
+    document.getElementById('wi-s').textContent     = d[8];
+    document.getElementById('wi-w').textContent     = d[12];
+    document.getElementById('wi-e').textContent     = T().east;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // GEOMETRY
+  // ═══════════════════════════════════════════════════════════════════
+  function halfAngle(ws) { return Math.max(6, Math.round(28-ws*2.0)); }
+  function coneLen(ws)   { return Math.min(0.02+ws*0.009, 0.13); }
+
+  function coneLatLngs(srcLat, srcLng, windFrom, ws) {
+    const half   = halfAngle(ws);
+    const len    = coneLen(ws);
+    const windTo = (windFrom+180)%360;
+    const cosLat = Math.cos(srcLat*Math.PI/180);
+    const ribs   = [0.35,0.65,1.0];
+    const splay  = [0.25,0.60,1.0];
+    const pts = [[srcLat,srcLng]];
+    ribs.forEach((frac,i) => {
+      const rad = (windTo-half*splay[i])*Math.PI/180;
+      pts.push([srcLat+Math.cos(rad)*len*frac, srcLng+Math.sin(rad)*len*frac/cosLat]);
+    });
+    for (let i=ribs.length-1; i>=0; i--) {
+      const rad = (windTo+half*splay[i])*Math.PI/180;
+      pts.push([srcLat+Math.cos(rad)*len*ribs[i], srcLng+Math.sin(rad)*len*ribs[i]/cosLat]);
+    }
+    return pts;
+  }
+
+  function pointInPolygon(lat, lng, poly) {
+    let inside = false;
+    for (let i=0,j=poly.length-1; i<poly.length; j=i++) {
+      const [yi,xi]=poly[i],[yj,xj]=poly[j];
+      if ((yi>lat)!==(yj>lat) && lng<(xj-xi)*(lat-yi)/(yj-yi)+xi) inside=!inside;
+    }
+    return inside;
+  }
+
+  function isUpwind(fla,fln,ula,uln,wf,ws) {
+    return pointInPolygon(ula, uln, coneLatLngs(fla,fln,wf,ws));
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // DRAW
+  // ═══════════════════════════════════════════════════════════════════
+  function drawCones(windFrom, ws) {
+    coneLayers.forEach(l => map.removeLayer(l));
+    coneLayers = [];
+    SOURCES.forEach(s => {
+      coneLayers.push(L.polygon(coneLatLngs(s.lat,s.lng,windFrom,ws), {
+        color:s.color, weight:1.5, opacity:.7,
+        fillColor:s.color, fillOpacity:.18, interactive:false
+      }).addTo(map));
+    });
+  }
+
+  function drawArrow(windFrom) {
+    if (arrowLayer) map.removeLayer(arrowLayer);
+    const windTo = (windFrom+180)%360;
+    const rad    = windTo*Math.PI/180, len=0.015;
+    const cosLat = Math.cos(loc.lat*Math.PI/180);
+    arrowLayer = L.polyline(
+      [[loc.lat,loc.lng],[loc.lat+Math.cos(rad)*len, loc.lng+Math.sin(rad)*len/cosLat]],
+      {color:'#fff',weight:2,opacity:.5,dashArray:'5 4'}
+    ).addTo(map);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // ANIMATION
+  // ═══════════════════════════════════════════════════════════════════
+  function lerpAngle(a, b, t) {
+    let d = b - a;
+    if (d >  180) d -= 360;
+    if (d < -180) d += 360;
+    return (a + d*t + 360) % 360;
+  }
+
+  function lerpWind(w1, w2, t) {
+    return { dir: lerpAngle(w1.dir, w2.dir, t), spd: w1.spd + (w2.spd-w1.spd)*t };
+  }
+
+  function easeInOut(t) { return t<0.5 ? 2*t*t : -1+(4-2*t)*t; }
+
+  function animateTo(target, onDone) {
+    if (animFrame) cancelAnimationFrame(animFrame);
+    const from  = displayWind ? {...displayWind} : {...target};
+    const start = performance.now();
+    const dur   = 600;
+    function frame(now) {
+      const t = Math.min((now-start)/dur, 1);
+      const w = lerpWind(from, target, easeInOut(t));
+      displayWind = w;
+      drawCones(w.dir, w.spd);
+      if (loc) drawArrow(w.dir);
+      updateWindWidget(w.dir, w.spd);
+      if (t < 1) {
+        animFrame = requestAnimationFrame(frame);
+      } else {
+        animFrame = null;
+        if (onDone) onDone(target);
+      }
+    }
+    animFrame = requestAnimationFrame(frame);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // WIND INTERPOLATION ACROSS HISTORY
+  // ═══════════════════════════════════════════════════════════════════
+  function getWindAtStep(step) {
+    // step 0=now (half-hourly steps), windHistory is hourly: [now, -1h, -2h, -3h]
+    const hourIdx = Math.floor(step / 2);
+    const frac    = (step % 2) / 2;
+    const a = windHistory[Math.min(hourIdx,   windHistory.length-1)];
+    const b = windHistory[Math.min(hourIdx+1, windHistory.length-1)];
+    return lerpWind(a, b, frac);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // ANALYSE
+  // ═══════════════════════════════════════════════════════════════════
+  function analyse(windFrom, ws) {
+    lastWind    = {dir:windFrom, spd:ws};
+    displayWind = {dir:windFrom, spd:ws};
+    drawCones(windFrom, ws);
+    drawArrow(windFrom);
+    updateWindWidget(windFrom, ws);
+
+    const up   = SOURCES.filter(s => isUpwind(s.lat,s.lng,loc.lat,loc.lng,windFrom,ws));
+    const ha   = halfAngle(ws);
+    const meta = `<span style="color:#556;font-size:.78rem"> · ${T().windmeta(dname(windFrom),windFrom,parseFloat(ws).toFixed(1),ha)}</span>`;
+
+    if (up.length===0) {
+      setBar(`<span style="color:#badc58;font-weight:600">${T().none}</span> ${T().nonedetail}${meta}`);
+    } else if (up.length===1) {
+      const s=up[0];
+      setBar(`<span style="color:${s.color};font-weight:600">${s.name}</span> ${T().source} <em>${getSmell(s)}</em>.${meta}${complaintBtn()}`);
+    } else {
+      const names  = up.map(s=>`<span style="color:${s.color};font-weight:600">${s.name}</span>`).join(', ');
+      const smells = [...new Set(up.map(s=>getSmell(s)))].join(' / ');
+      setBar(`<span style="color:#ff7979;font-weight:600">${T().multi}</span> ${names} — ${T().multimix} <em>${smells}</em>.${meta}${complaintBtn()}`);
+    }
+  }
+
+  function analyseStep(step) {
+    const w = getWindAtStep(step);
+    analyse(w.dir, w.spd);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // WIND FETCH (current + 3h history)
+  // ═══════════════════════════════════════════════════════════════════
+  async function loadWind() {
+    if (!loc) return;
+    setBar(`<em style="color:#aaa">${T().windfetch(loc.name)}</em>`);
+    try {
+      const ctrl    = new AbortController();
+      const timeout = setTimeout(()=>ctrl.abort(), 8000);
+      const res = await fetch(
+        `https://api.open-meteo.com/v1/forecast` +
+        `?latitude=${loc.lat}&longitude=${loc.lng}` +
+        `&current=wind_speed_10m,wind_direction_10m` +
+        `&hourly=wind_speed_10m,wind_direction_10m` +
+        `&wind_speed_unit=ms&past_days=1&forecast_days=1`,
+        {signal:ctrl.signal}
+      );
+      clearTimeout(timeout);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const d  = await res.json();
+      const wd = d?.current?.wind_direction_10m;
+      const ws = d?.current?.wind_speed_10m;
+      if (typeof wd!=='number'||typeof ws!=='number') throw new Error('Onverwacht API-antwoord');
+
+      // Build wind history from hourly data: [now, -1h, -2h, -3h]
+      const times = d.hourly.time;           // ISO strings
+      const hdirs = d.hourly.wind_direction_10m;
+      const hspds = d.hourly.wind_speed_10m;
+      const now   = new Date();
+      // find index of current hour
+      let ci = times.length - 1;
+      for (let i=0; i<times.length; i++) {
+        if (new Date(times[i]) > now) { ci = Math.max(0, i-1); break; }
+      }
+      windHistory = [];
+      windHistory.push({dir:wd, spd:ws}); // step 0 = live current reading
+      for (let h=1; h<=3; h++) {
+        const idx = ci - h;
+        if (idx >= 0) {
+          windHistory.push({dir:hdirs[idx], spd:hspds[idx]});
+        } else {
+          windHistory.push({...windHistory[windHistory.length-1]}); // repeat if not available
+        }
+      }
+
+      // Reset slider to "now"
+      currentStep = 0;
+      const range = document.getElementById('time-range');
+      if (range) range.value = STEPS; // rightmost = now
+      showSlider();
+      updateSliderLabel(0);
+      analyse(wd, ws);
+    } catch(e) {
+      setBar(`<span style="color:#e94560">${T().windfail(e.name==='AbortError'?'Timeout':e.message)}</span>`);
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // SLIDER EVENT
+  // ═══════════════════════════════════════════════════════════════════
+  document.getElementById('time-range').addEventListener('input', function() {
+    const step = STEPS - parseInt(this.value); // invert: right=now, left=past
+    const prev = currentStep;
+    currentStep = step;
+    updateSliderLabel(step);
+    if (windHistory.length === 0) return;
+    const target = getWindAtStep(step);
+    animateTo(target, () => analyseStep(step));
+  });
+
+  // ═══════════════════════════════════════════════════════════════════
+  // LOCATION
+  // ═══════════════════════════════════════════════════════════════════
+  function updateUser() {
+    if (!loc) return;
+    if (!userMarker) {
+      userMarker = L.marker([loc.lat,loc.lng],{icon:circleIcon('#e94560',14),zIndexOffset:1000}).addTo(map);
+    } else {
+      userMarker.setLatLng([loc.lat,loc.lng]);
+    }
+    userMarker.setPopupContent(`<b style="color:#e94560">${loc.name}</b>`);
+    map.panTo([loc.lat,loc.lng]);
+  }
+
+  async function doSearch() {
+    const q = document.getElementById('qry').value.trim();
+    if (!q) { setBar(T().init); return; }
+    setBar(`<em style="color:#aaa">${T().searching(q)}</em>`);
+    try {
+      const res  = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1&countrycodes=nl`,
+        {headers:{'Accept-Language':lang}}
+      );
+      const data = await res.json();
+      if (!data.length) throw new Error('—');
+      loc = {lat:parseFloat(data[0].lat), lng:parseFloat(data[0].lon), name:data[0].display_name};
+      updateUser(); await loadWind();
+    } catch(e) {
+      setBar(`<span style="color:#e94560">${T().notfound(e.message)}</span>`);
+    }
+  }
+
+  function doGeo() {
+    if (!navigator.geolocation) { setBar(`<span style="color:#e94560">${T().geonosup}</span>`); return; }
+    setBar(`<em style="color:#aaa">${T().locating}</em>`);
+    navigator.geolocation.getCurrentPosition(
+      async p => {
+        loc = {lat:p.coords.latitude, lng:p.coords.longitude, name:T().gpsloc};
+        updateUser(); await loadWind();
+      },
+      () => setBar(`<span style="color:#e94560">${T().geodenied}</span>`)
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // MAP CLICK
+  // ═══════════════════════════════════════════════════════════════════
+  map.on('click', async e => {
+    loc = {lat:e.latlng.lat, lng:e.latlng.lng, name:`${e.latlng.lat.toFixed(4)}, ${e.latlng.lng.toFixed(4)}`};
+    updateUser(); await loadWind();
+  });
+  document.getElementById('qry').addEventListener('keydown', e => { if(e.key==='Enter') doSearch(); });
+
+  // ═══════════════════════════════════════════════════════════════════
+  // LANGUAGE
+  // ═══════════════════════════════════════════════════════════════════
+  function applyLang() {
+    document.getElementById('t-title').textContent  = T().title;
+    document.getElementById('qry').placeholder       = T().placeholder;
+    document.getElementById('t-search').textContent  = T().search;
+    document.getElementById('t-geo').textContent     = T().geo;
+    document.getElementById('lang-btn').textContent  = lang.toUpperCase();
+    const d = tDirs();
+    document.getElementById('wi-n').textContent = d[0];
+    document.getElementById('wi-s').textContent = d[8];
+    document.getElementById('wi-w').textContent = d[12];
+    document.getElementById('wi-e').textContent = T().east;
+    buildSliderTicks();
+    updateSliderLabel(currentStep);
+  }
+
+  function toggleLang() {
+    lang = lang==='nl' ? 'en' : 'nl';
+    try { localStorage.setItem('smellLang', lang); } catch(e) {}
+    applyLang();
+    if (lastWind) analyse(lastWind.dir, lastWind.spd);
+    else setBar(T().init);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // PWA
+  // ═══════════════════════════════════════════════════════════════════
+  try {
+    const manifest = {
+      name:'Amsterdam Geurtracker', short_name:'Geurtracker',
+      start_url:'.', display:'standalone',
+      background_color:'#1a1a2e', theme_color:'#16213e',
+      icons:[{src:"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌬️</text></svg>",sizes:'any',type:'image/svg+xml'}]
+    };
+    document.getElementById('manifest-link').href =
+      URL.createObjectURL(new Blob([JSON.stringify(manifest)],{type:'application/json'}));
+  } catch(e) {}
+
+  // ═══════════════════════════════════════════════════════════════════
+  // INIT
+  // ═══════════════════════════════════════════════════════════════════
+  applyLang();
+  setBar(T().init);
+</script>
+</body>
+</html>
