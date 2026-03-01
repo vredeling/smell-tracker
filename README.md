@@ -1,6 +1,6 @@
 # 🌬️ Amsterdam Geurtracker
 
-A single-file progressive web app (PWA) that helps residents of Amsterdam's Westpoort area identify the likely source of industrial smells based on live wind data.
+A single-file progressive web app (PWA) that helps residents of neighbourhoods surrounding Amsterdam's Westpoort area identify the likely source of industrial smells based on live wind data.
 
 ## What it does
 
@@ -10,7 +10,7 @@ Users can also scrub back through the past 3 hours of wind data in 30-minute inc
 
 ## Live demo
 
-Hosted on GitHub Pages: [https://yourusername.github.io/geurtracker](https://yourusername.github.io/geurtracker)
+Hosted on GitHub Pages: [https://vredeling.github.io/smell-tracker](https://vredeling.github.io/smell-tracker)
 
 ---
 
@@ -18,10 +18,10 @@ Hosted on GitHub Pages: [https://yourusername.github.io/geurtracker](https://you
 
 | Source | Location | Typical smell |
 |---|---|---|
-| ICL Fertiliser | Fosfaatweg 48, Westpoort | Rotte eieren / zwavel |
-| Bunge | HoogTij, Westpoort (new plant 2024) | Olieachtig / zaadverwerking |
-| Afval Energie Bedrijf | Westpoort | Verbrand / afvalverbranding |
-| Benzine Terminal | Westpoort | Benzine / koolwaterstof |
+| ICL Fertiliser | Fosfaatweg 48, Westpoort | Scherp chemisch / verbrand rubber / uitlaatgassen |
+| Bunge | HoogTij, Westpoort (new plant 2024) | Weeïg zoet / gekookte pasta / geroosterde soja |
+| Afval Energie Bedrijf | Westpoort | Verbrand afval / zware organische lucht |
+| Benzine Terminal | Westpoort | Benzine / nafta / scherp aromatisch, prikt in keel |
 
 ---
 

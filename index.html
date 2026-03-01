@@ -35,6 +35,15 @@
     #slider-ticks{display:flex;justify-content:space-between;margin-top:4px}
     #slider-ticks span{color:#445;font-size:.68rem}
     #slider-ticks span.active{color:#e4940d;font-weight:700}
+    #sources-wrap{position:relative}
+    #sources-panel{display:none;position:absolute;top:calc(100% + 6px);right:0;
+      background:#16213e;border:1px solid #0f3460;border-radius:10px;
+      padding:10px 14px;z-index:2000;min-width:220px;box-shadow:0 4px 16px rgba(0,0,0,.5)}
+    #sources-panel.open{display:block}
+    .src-row{display:flex;align-items:center;gap:8px;padding:5px 0}
+    .src-row:not(:last-child){border-bottom:1px solid #1a3a6e}
+    .src-row label{flex:1;font-size:.83rem;color:#eee;cursor:pointer;white-space:nowrap}
+    .src-row input[type=checkbox]{cursor:pointer;width:15px;height:15px;accent-color:#e4940d;flex-shrink:0}
   </style>
 </head>
 <body>
@@ -44,6 +53,10 @@
   <input id="qry" placeholder="Voer een adres in…"/>
   <button class="btn" style="background:#e94560;color:#fff" onclick="doSearch()" id="t-search">Zoeken</button>
   <button class="btn" style="background:#0f3460;color:#eee" onclick="doGeo()" id="t-geo">📍 Mijn locatie</button>
+  <div id="sources-wrap">
+    <button class="btn" style="background:#1a1a2e;color:#aaa;border:1px solid #0f3460" onclick="toggleSourcesPanel()" id="sources-btn">🏭 Bronnen</button>
+    <div id="sources-panel"></div>
+  </div>
   <button class="btn" style="background:#1a1a2e;color:#aaa;border:1px solid #0f3460" onclick="toggleLang()" id="lang-btn">NL</button>
 </div>
 <div id="map"></div>
@@ -77,6 +90,7 @@
       complaint:   '📢 Meld overlast',
       sliderNow:   'Nu',
       sliderPast:  m => m < 60 ? `-${m} min` : (m%60===0 ? `-${m/60} uur` : `-${Math.floor(m/60)}u ${m%60}`),
+      sources:     '🏭 Bronnen',
       dirs: ['N','NNO','NO','ONO','O','OZO','ZO','ZZO','Z','ZZW','ZW','WZW','W','WNW','NW','NNW'],
       east: 'O'
     },
@@ -103,6 +117,7 @@
       complaint:   '📢 Report complaint',
       sliderNow:   'Now',
       sliderPast:  m => m < 60 ? `-${m} min` : (m%60===0 ? `-${m/60} hr` : `-${Math.floor(m/60)}h ${m%60}`),
+      sources:     '🏭 Sources',
       dirs: ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'],
       east: 'E'
     }
@@ -127,19 +142,19 @@
   const SOURCES = [
     {
       key: 'ICL', name: 'ICL Fertiliser', lat: 52.405573809228095, lng: 4.872616230074212, color: '#e4940d',
-      smell: { nl: 'rotte eieren / zwavel', en: 'rotten eggs / sulphur' },
+      smell: { nl: 'scherp chemisch / verbrand rubber / uitlaatgassen', en: 'sharp chemical / burnt rubber / exhaust fumes' },
     },
     {
       key: 'BUNGE', name: 'Bunge', lat: 52.401652066660496, lng: 4.864216945287884, color: '#0ccbde',
-      smell: { nl: 'olieachtig / vettig / zaadverwerking', en: 'oily / fatty / seed-processing' },
+      smell: { nl: 'weeïg zoet / gekookte pasta / geroosterde soja', en: 'sickly sweet / cooked pasta / toasted soy' },
     },
     {
       key: 'AEB', name: 'Afval Energie Bedrijf', lat: 52.400757, lng: 4.796737, color: '#8834cc',
-      smell: { nl: 'verbrand / afvalverbranding', en: 'burnt / waste incineration' },
+      smell: { nl: 'verbrand afval / zware organische lucht', en: 'burnt waste / heavy organic smell' },
     },
     {
       key: 'BENZINE', name: 'Benzine Terminal', lat: 52.412988, lng: 4.851795, color: '#ca1e66',
-      smell: { nl: 'benzine / koolwaterstof', en: 'petrol / hydrocarbon' },
+      smell: { nl: 'benzine / nafta / scherp aromatisch, prikt in keel', en: 'petrol / naphtha / sharp aromatic, stings throat' },
     },
   ];
 
@@ -159,8 +174,10 @@
       iconAnchor:[size/2,size/2]
     });
   }
+  const sourceMarkers = {};
   SOURCES.forEach(s => {
-    L.marker([s.lat,s.lng],{icon:circleIcon(s.color,16)}).addTo(map)
+    s.enabled = true;
+    sourceMarkers[s.key] = L.marker([s.lat,s.lng],{icon:circleIcon(s.color,16)}).addTo(map)
       .bindPopup(`<b style="color:${s.color}">${s.name}</b><br><span style="color:#aaa">${getSmell(s)}</span>`);
   });
 
@@ -312,12 +329,41 @@
   }
 
   // ═══════════════════════════════════════════════════════════════════
+  // SOURCES PANEL
+  // ═══════════════════════════════════════════════════════════════════
+  function buildSourcesPanel() {
+    document.getElementById('sources-panel').innerHTML = SOURCES.map(s => `
+      <div class="src-row">
+        <input type="checkbox" id="chk-${s.key}" checked
+               onchange="onSourceToggle('${s.key}', this.checked)">
+        <label for="chk-${s.key}">${s.name}</label>
+      </div>`).join('');
+  }
+
+  function toggleSourcesPanel() {
+    document.getElementById('sources-panel').classList.toggle('open');
+  }
+
+  document.addEventListener('click', e => {
+    if (!document.getElementById('sources-wrap').contains(e.target))
+      document.getElementById('sources-panel').classList.remove('open');
+  });
+
+  function onSourceToggle(key, enabled) {
+    const s = SOURCES.find(x => x.key === key);
+    s.enabled = enabled;
+    const m = sourceMarkers[key];
+    if (m) { enabled ? m.addTo(map) : map.removeLayer(m); }
+    if (lastWind) analyse(lastWind.dir, lastWind.spd);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
   // DRAW
   // ═══════════════════════════════════════════════════════════════════
   function drawCones(windFrom, ws) {
     coneLayers.forEach(l => map.removeLayer(l));
     coneLayers = [];
-    SOURCES.forEach(s => {
+    SOURCES.filter(s => s.enabled).forEach(s => {
       coneLayers.push(L.polygon(coneLatLngs(s.lat,s.lng,windFrom,ws), {
         color:s.color, weight:1.5, opacity:.7,
         fillColor:s.color, fillOpacity:.18, interactive:false
@@ -396,7 +442,7 @@
     drawArrow(windFrom);
     updateWindWidget(windFrom, ws);
 
-    const up   = SOURCES.filter(s => isUpwind(s.lat,s.lng,loc.lat,loc.lng,windFrom,ws));
+    const up   = SOURCES.filter(s => s.enabled && isUpwind(s.lat,s.lng,loc.lat,loc.lng,windFrom,ws));
     const ha   = halfAngle(ws);
     const meta = `<span style="color:#556;font-size:.78rem"> · ${T().windmeta(dname(windFrom),windFrom,parseFloat(ws).toFixed(1),ha)}</span>`;
 
@@ -548,7 +594,8 @@
     document.getElementById('qry').placeholder       = T().placeholder;
     document.getElementById('t-search').textContent  = T().search;
     document.getElementById('t-geo').textContent     = T().geo;
-    document.getElementById('lang-btn').textContent  = lang.toUpperCase();
+    document.getElementById('lang-btn').textContent    = lang.toUpperCase();
+    document.getElementById('sources-btn').textContent = T().sources;
     const d = tDirs();
     document.getElementById('wi-n').textContent = d[0];
     document.getElementById('wi-s').textContent = d[8];
@@ -583,6 +630,7 @@
   // ═══════════════════════════════════════════════════════════════════
   // INIT
   // ═══════════════════════════════════════════════════════════════════
+  buildSourcesPanel();
   applyLang();
   setBar(T().init);
 </script>
