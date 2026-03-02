@@ -35,7 +35,7 @@
       #time-slider{left:10px;right:118px;transform:none;min-width:0;max-width:none}
     }
     #slider-label{color:#e4940d;font-size:.82rem;font-weight:700;margin-bottom:5px;letter-spacing:.03em}
-    #time-range{width:100%;accent-color:#e4940d;cursor:pointer;height:4px}
+    #time-range{width:100%;accent-color:#e4940d;cursor:pointer;height:4px;touch-action:none}
     #slider-ticks{display:flex;justify-content:space-between;margin-top:4px}
     #slider-ticks span{color:#445;font-size:.68rem}
     #slider-ticks span.active{color:#e4940d;font-weight:700}
@@ -212,6 +212,9 @@
   map.getContainer().appendChild(sliderEl);
   L.DomEvent.disableClickPropagation(sliderEl);
   L.DomEvent.disableScrollPropagation(sliderEl);
+  sliderEl.addEventListener('touchstart', e => e.stopPropagation(), {passive: true});
+  sliderEl.addEventListener('touchmove',  e => e.stopPropagation(), {passive: true});
+  sliderEl.addEventListener('touchend',   e => e.stopPropagation(), {passive: true});
 
   function buildSliderTicks() {
     const ticks = document.getElementById('slider-ticks');
