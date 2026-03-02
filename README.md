@@ -16,12 +16,12 @@ Hosted on GitHub Pages: [https://vredeling.github.io/smell-tracker](https://vred
 
 ## Smell sources
 
-| Source | Location | Typical smell |
-|---|---|---|
-| ICL Fertiliser | Fosfaatweg 48, Westpoort | Scherp chemisch / verbrand rubber / uitlaatgassen |
-| Bunge | HoogTij, Westpoort (new plant 2024) | Weeïg zoet / gekookte pasta / geroosterde soja |
-| Afval Energie Bedrijf | Westpoort | Verbrand afval / zware organische lucht |
-| Benzine Terminal | Westpoort | Benzine / nafta / scherp aromatisch, prikt in keel |
+| Source | Typical smell |
+|---|---|
+| ICL Fertilizers BV | Scherp chemisch / verbrand rubber / uitlaatgassen |
+| Bunge | Weeïg zoet / gekookte pasta / geroosterde soja |
+| Afval Energie Bedrijf | Verbrand afval / zware organische lucht |
+| Benzine Terminal | Benzine / nafta / scherp aromatisch, prikt in keel |
 
 ---
 
