@@ -300,26 +300,50 @@
   // ═══════════════════════════════════════════════════════════════════
   // GEOMETRY
   // ═══════════════════════════════════════════════════════════════════
-  function halfAngle(ws) { return Math.max(6, Math.round(28-ws*2.0)); }
-  function coneLen(ws)   { return Math.min(0.02+ws*0.009, 0.13); }
+  // Pasquill-Gifford stability class from wind speed (simplified, daytime approximation)
+  function pgClass(ws) {
+    if (ws < 2) return 'A';
+    if (ws < 3) return 'B';
+    if (ws < 5) return 'C';
+    return 'D';
+  }
+
+  // Briggs (1973) rural σy in metres; x in metres
+  function sigmaY(x, cls) {
+    switch (cls) {
+      case 'A': return 0.22 * x * Math.pow(1 + 0.0001 * x, -0.5);
+      case 'B': return 0.16 * x * Math.pow(1 + 0.0001 * x, -0.5);
+      case 'C': return 0.11 * x * Math.pow(1 + 0.0001 * x, -0.5);
+      default:  return 0.08 * x * Math.pow(1 + 0.0002 * x, -0.5);
+    }
+  }
+
+  // Effective half-angle at 1 km reference distance (for display in wind widget)
+  function halfAngle(ws) {
+    return Math.round(Math.atan2(2 * sigmaY(1000, pgClass(ws)), 1000) * 180 / Math.PI);
+  }
 
   function coneLatLngs(srcLat, srcLng, windFrom, ws) {
-    const half   = halfAngle(ws);
-    const len    = coneLen(ws);
-    const windTo = (windFrom+180)%360;
-    const cosLat = Math.cos(srcLat*Math.PI/180);
-    const ribs   = [0.35,0.65,1.0];
-    const splay  = [0.25,0.60,1.0];
-    const pts = [[srcLat,srcLng]];
-    ribs.forEach((frac,i) => {
-      const rad = (windTo-half*splay[i])*Math.PI/180;
-      pts.push([srcLat+Math.cos(rad)*len*frac, srcLng+Math.sin(rad)*len*frac/cosLat]);
-    });
-    for (let i=ribs.length-1; i>=0; i--) {
-      const rad = (windTo+half*splay[i])*Math.PI/180;
-      pts.push([srcLat+Math.cos(rad)*len*ribs[i], srcLng+Math.sin(rad)*len*ribs[i]/cosLat]);
+    const cls     = pgClass(ws);
+    const maxDist = Math.min(2000 + ws * 1100, 13000); // metres
+    const windTo  = (windFrom + 180) % 360;
+    const toRad   = windTo * Math.PI / 180;
+    const cosLat  = Math.cos(srcLat * Math.PI / 180);
+    const M       = 111320; // metres per degree latitude
+    const N       = 14;     // points per edge — enough for smooth curves
+
+    const left = [], right = [];
+    for (let i = 1; i <= N; i++) {
+      const x  = (i / N) * maxDist;
+      const sy = 2 * sigmaY(x, cls);            // 2σ lateral boundary
+      const cLat = srcLat + Math.cos(toRad) * x / M;
+      const cLng = srcLng + Math.sin(toRad) * x / (M * cosLat);
+      const pL = (windTo - 90) * Math.PI / 180;
+      const pR = (windTo + 90) * Math.PI / 180;
+      left.push( [cLat + Math.cos(pL) * sy / M, cLng + Math.sin(pL) * sy / (M * cosLat)]);
+      right.push([cLat + Math.cos(pR) * sy / M, cLng + Math.sin(pR) * sy / (M * cosLat)]);
     }
-    return pts;
+    return [[srcLat, srcLng], ...left, ...right.reverse()];
   }
 
   function pointInPolygon(lat, lng, poly) {

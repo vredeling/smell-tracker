@@ -74,6 +74,21 @@ Upload `index.html` to any static host. GitHub Pages is recommended (free HTTPS,
 
 ---
 
+## Disclaimer
+
+The plume cones are a simplified indicative model, not a certified dispersion calculation. Cone width is derived from the Pasquill-Gifford atmospheric dispersion model (Briggs 1973 rural σy formula) using wind speed as a proxy for atmospheric stability. This is a known simplification: a full model would also account for time of day, cloud cover, surface roughness, and source stack height.
+
+In practice this means:
+
+- The cone shows where smell is *plausible*, not where it is *certain*
+- Stability class is estimated from wind speed alone — calm sunny afternoons and calm clear nights produce very different real-world dispersion but are treated identically here
+- No concentration gradient is shown — inside the cone is treated as a uniform zone
+- Source coordinates are approximate public-domain locations, not surveyed emission points
+
+This app is intended as a residents' orientation tool and a starting point for filing complaints. It is not a substitute for professional air quality monitoring or official source attribution.
+
+---
+
 ## Complaint portal
 
 Smell complaints can be filed at:
