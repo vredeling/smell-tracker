@@ -48,6 +48,37 @@
     .src-row:not(:last-child){border-bottom:1px solid #1a3a6e}
     .src-row label{flex:1;font-size:.83rem;color:#eee;cursor:pointer;white-space:nowrap}
     .src-row input[type=checkbox]{cursor:pointer;width:15px;height:15px;accent-color:#e4940d;flex-shrink:0}
+    #about-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:99999;align-items:center;justify-content:center}
+    #about-overlay.open{display:flex}
+    #about-box{background:#16213e;border:1px solid #0f3460;border-radius:12px;padding:22px 24px;max-width:420px;width:90%;font-size:.85rem;line-height:1.6;color:#ccc;position:relative}
+    #about-box h2{color:#eee;font-size:1rem;margin-bottom:10px}
+    #about-box p{margin-bottom:10px}
+    #about-box p:last-of-type{margin-bottom:16px}
+    #about-close{display:block;width:100%;padding:7px;border-radius:6px;border:none;background:#0f3460;color:#eee;cursor:pointer;font-size:.85rem}
+    #cs-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:99999;align-items:center;justify-content:center}
+    #cs-overlay.open{display:flex}
+    #cs-box{background:#16213e;border:1px solid #0f3460;border-radius:12px;padding:22px 24px;max-width:360px;width:90%;font-size:.85rem;color:#ccc}
+    #cs-box h2{color:#eee;font-size:1rem;margin-bottom:14px}
+    .cs-field{margin-bottom:12px}
+    .cs-field label{display:block;font-size:.78rem;color:#aaa;margin-bottom:4px}
+    .cs-field input[type=text]{width:100%;padding:6px 10px;border-radius:6px;border:1px solid #0f3460;background:#0f3460;color:#eee;font-size:.83rem;outline:none}
+    #cs-colors{display:flex;gap:8px;flex-wrap:wrap;margin-top:2px}
+    .cs-swatch{width:24px;height:24px;border-radius:50%;cursor:pointer;border:2px solid transparent;flex-shrink:0}
+    .cs-swatch.selected{border-color:#fff;box-shadow:0 0 6px rgba(255,255,255,.4)}
+    #cs-loc-btn{padding:5px 10px;border-radius:6px;border:1px solid #0f3460;background:#0f3460;color:#eee;cursor:pointer;font-size:.8rem;margin-top:4px}
+    #cs-loc-display{font-size:.78rem;color:#7ed6df;margin-top:5px;min-height:14px}
+    .cs-actions{display:flex;gap:8px;margin-top:16px}
+    .cs-actions button{flex:1;padding:7px;border-radius:6px;border:none;cursor:pointer;font-size:.85rem;font-weight:600}
+    #cs-cancel{background:#0f3460;color:#eee}
+    #cs-save{background:#e94560;color:#fff}
+    #pick-banner{display:none;position:fixed;top:0;left:0;right:0;z-index:99998;background:#e4940d;color:#1a1a2e;text-align:center;padding:10px 14px;font-size:.88rem;font-weight:600;cursor:pointer}
+    .src-del{background:none;border:none;color:#556;font-size:1rem;cursor:pointer;padding:0 2px;line-height:1;flex-shrink:0}
+    .src-del:hover{color:#e94560}
+    #sources-panel{max-height:80vh;overflow-y:auto}
+    .src-add{display:block;width:100%;margin-top:8px;padding:5px;border-radius:6px;border:1px dashed #0f3460;background:none;color:#7ed6df;cursor:pointer;font-size:.82rem}
+    .src-add:hover{background:#0f346022}
+    .src-suggest{display:block;text-align:center;margin-top:7px;padding-top:7px;border-top:1px solid #1a3a6e;font-size:.76rem;color:#445;text-decoration:none}
+    .src-suggest:hover{color:#7ed6df}
   </style>
 </head>
 <body>
@@ -62,6 +93,43 @@
     <div id="sources-panel"></div>
   </div>
   <button class="btn" style="background:#1a1a2e;color:#aaa;border:1px solid #0f3460" onclick="toggleLang()" id="lang-btn">NL</button>
+  <button class="btn" style="background:#1a1a2e;color:#aaa;border:1px solid #0f3460" onclick="openAbout()" id="about-btn">?</button>
+</div>
+<div id="pick-banner" onclick="cancelPickLocation()"></div>
+<div id="cs-overlay" onclick="if(event.target===this)closeCustomSourceForm()">
+  <div id="cs-box">
+    <h2 id="cs-title"></h2>
+    <div class="cs-field">
+      <label id="cs-lbl-name"></label>
+      <input id="cs-name" type="text"/>
+    </div>
+    <div class="cs-field">
+      <label id="cs-lbl-smell"></label>
+      <input id="cs-smell" type="text"/>
+    </div>
+    <div class="cs-field">
+      <label id="cs-lbl-color"></label>
+      <div id="cs-colors"></div>
+    </div>
+    <div class="cs-field">
+      <label id="cs-lbl-loc"></label>
+      <button id="cs-loc-btn" onclick="startPickLocation()"></button>
+      <div id="cs-loc-display"></div>
+    </div>
+    <div class="cs-actions">
+      <button id="cs-cancel" onclick="closeCustomSourceForm()"></button>
+      <button id="cs-save" onclick="saveCustomSource()"></button>
+    </div>
+  </div>
+</div>
+<div id="about-overlay" onclick="if(event.target===this)closeAbout()">
+  <div id="about-box">
+    <h2 id="ab-title"></h2>
+    <p id="ab-body1"></p>
+    <p id="ab-body2"></p>
+    <p id="ab-body3"></p>
+    <button id="about-close" onclick="closeAbout()" id="ab-close"></button>
+  </div>
 </div>
 <div id="map"></div>
 <div id="bar"></div>
@@ -92,11 +160,31 @@
       windmeta:    (dir,deg,spd,ha) => `${dir} (${deg}°), ${spd} m/s, pluim ±${ha}°`,
       gpsloc:      'Jouw GPS-locatie',
       complaint:   '📢 Meld overlast',
-      sliderNow:   'Nu',
-      sliderPast:  m => m < 60 ? `-${m} min` : (m%60===0 ? `-${m/60} uur` : `-${Math.floor(m/60)}u ${m%60}`),
+      sliderNow:    'Nu',
+      sliderPast:   m => m < 60 ? `-${m} min` : (m%60===0 ? `-${m/60} uur` : `-${Math.floor(m/60)}u ${m%60}`),
+      sliderFuture: m => m < 60 ? `+${m} min` : (m%60===0 ? `+${m/60} uur` : `+${Math.floor(m/60)}u ${m%60}`),
       sources:     '🏭 Bronnen',
       dirs: ['N','NNO','NO','ONO','O','OZO','ZO','ZZO','Z','ZZW','ZW','WZW','W','WNW','NW','NNW'],
-      east: 'O'
+      east: 'O',
+      aboutTitle: 'Over deze app',
+      aboutBody1: 'De Amsterdam Geurtracker is een hulpmiddel om te beoordelen of een industriële bron in de buurt mogelijk de oorzaak is van een geur die je ruikt. De app combineert jouw locatie met actuele winddata om een verspreiding te schatten.',
+      aboutBody2: 'De resultaten zijn indicatief. Het model is een vereenvoudigde berekening en houdt geen rekening met alle factoren die de verspreiding van geuren beïnvloeden. Er kunnen geen rechten worden ontleend aan de uitkomsten.',
+      aboutBody3: 'Is er sprake van geuroverlast? Gebruik de knop "📢 Meld overlast" om een officiële klacht in te dienen bij de bevoegde instantie.',
+      aboutClose: 'Sluiten',
+      csTitle:       'Bron toevoegen',
+      csName:        'Naam',
+      csSmell:       'Geurtype (omschrijving)',
+      csColor:       'Kleur',
+      csLoc:         'Locatie op de kaart',
+      csLocBtn:      '📍 Klik op de kaart',
+      csLocNone:     'Nog niet ingesteld',
+      csCancel:      'Annuleren',
+      csSave:        'Opslaan',
+      csPickBanner:  'Klik op de kaart om de locatie in te stellen. Tik hier om te annuleren.',
+      csAddBtn:      '＋ Bron toevoegen',
+      csSuggest:     'Ontbreekt er een bron? Stel voor op GitHub ↗',
+      csNameReq:     'Vul een naam in.',
+      csLocReq:      'Stel een locatie in op de kaart.'
     },
     en: {
       title:       '🌬️ Amsterdam Smell Tracker',
@@ -119,11 +207,31 @@
       windmeta:    (dir,deg,spd,ha) => `${dir} (${deg}°), ${spd} m/s, plume ±${ha}°`,
       gpsloc:      'Your GPS location',
       complaint:   '📢 Report complaint',
-      sliderNow:   'Now',
-      sliderPast:  m => m < 60 ? `-${m} min` : (m%60===0 ? `-${m/60} hr` : `-${Math.floor(m/60)}h ${m%60}`),
+      sliderNow:    'Now',
+      sliderPast:   m => m < 60 ? `-${m} min` : (m%60===0 ? `-${m/60} hr` : `-${Math.floor(m/60)}h ${m%60}`),
+      sliderFuture: m => m < 60 ? `+${m} min` : (m%60===0 ? `+${m/60} hr` : `+${Math.floor(m/60)}h ${m%60}`),
       sources:     '🏭 Sources',
       dirs: ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'],
-      east: 'E'
+      east: 'E',
+      aboutTitle: 'About this app',
+      aboutBody1: 'Amsterdam Smell Tracker is a tool to help assess whether a nearby industrial source may be responsible for a smell you notice. It combines your location with live wind data to estimate atmospheric dispersion.',
+      aboutBody2: 'Results are indicative only. The model uses a simplified calculation and does not account for all factors affecting odour dispersion. No rights can be derived from the outcomes.',
+      aboutBody3: 'Experiencing odour nuisance? Use the "📢 Report complaint" button to file an official report with the competent authority.',
+      aboutClose: 'Close',
+      csTitle:       'Add source',
+      csName:        'Name',
+      csSmell:       'Smell type (description)',
+      csColor:       'Colour',
+      csLoc:         'Location on map',
+      csLocBtn:      '📍 Click on map',
+      csLocNone:     'Not set',
+      csCancel:      'Cancel',
+      csSave:        'Save',
+      csPickBanner:  'Click on the map to set the source location. Tap here to cancel.',
+      csAddBtn:      '＋ Add source',
+      csSuggest:     'Missing a source? Suggest one on GitHub ↗',
+      csNameReq:     'Please enter a name.',
+      csLocReq:      'Please set a location on the map.'
     }
   };
 
@@ -194,10 +302,12 @@
   // ═══════════════════════════════════════════════════════════════════
   // TIME SLIDER
   // ═══════════════════════════════════════════════════════════════════
-  // 7 steps: 0=now, 1=-30m, 2=-1h, 3=-1h30, 4=-2h, 5=-2h30, 6=-3h
-  const STEPS      = 6;
-  const STEP_MINS  = 30;
-  let windHistory  = [];   // hourly readings: [now, -1h, -2h, -3h]
+  // Steps: negative = future (+8h), 0 = now, positive = past (-8h), 30 min per step
+  const PAST_STEPS   = 16;  // 8h of history
+  const FUTURE_STEPS = 16;  // 8h of forecast
+  const STEP_MINS    = 30;
+  let windPast   = [];   // hourly: [now, -1h, ..., -8h]
+  let windFuture = [];   // hourly: [+1h, +2h, ..., +8h]
   let currentStep  = 0;
   let animFrame    = null;
   let displayWind  = null; // what's currently drawn
@@ -207,7 +317,7 @@
   sliderEl.id = 'time-slider';
   sliderEl.innerHTML = `
   <div id="slider-label">Nu</div>
-  <input type="range" id="time-range" min="0" max="${STEPS}" step="1" value="${STEPS}">
+  <input type="range" id="time-range" min="0" max="${PAST_STEPS + FUTURE_STEPS}" step="1" value="${FUTURE_STEPS}">
   <div id="slider-ticks"></div>`;
   map.getContainer().appendChild(sliderEl);
   L.DomEvent.disableClickPropagation(sliderEl);
@@ -216,27 +326,35 @@
   sliderEl.addEventListener('touchmove',  e => e.stopPropagation(), {passive: true});
   sliderEl.addEventListener('touchend',   e => e.stopPropagation(), {passive: true});
 
+  function stepLabel(step) {
+    if (step === 0)  return T().sliderNow;
+    if (step > 0)    return T().sliderPast(step * STEP_MINS);
+    return T().sliderFuture(-step * STEP_MINS);
+  }
+
   function buildSliderTicks() {
     const ticks = document.getElementById('slider-ticks');
     if (!ticks) return;
     ticks.innerHTML = '';
-    for (let i = STEPS; i >= 0; i--) {
-      const mins = i * STEP_MINS;
-      const lbl  = mins === 0 ? T().sliderNow : T().sliderPast(mins);
-      const sp   = document.createElement('span');
-      sp.textContent   = lbl;
-      sp.dataset.step  = i;
-      if (i === currentStep) sp.classList.add('active');
+    // Show a tick every 4 steps (2h), from past to future
+    const keySteps = [PAST_STEPS, 8, 4, 0, -4, -8, -FUTURE_STEPS];
+    keySteps.forEach(step => {
+      const sp = document.createElement('span');
+      sp.textContent  = stepLabel(step);
+      sp.dataset.step = step;
+      if (step === 0) sp.style.color = '#e4940d';
+      if (step < 0)   sp.style.color = '#7ed6df';
+      if (step === currentStep) sp.classList.add('active');
       ticks.appendChild(sp);
-    }
+    });
   }
 
   function updateSliderLabel(step) {
-    const mins = step * STEP_MINS;
-    const lbl  = mins === 0 ? T().sliderNow : T().sliderPast(mins);
-    const el   = document.getElementById('slider-label');
-    if (el) el.textContent = lbl;
-    // update tick highlights
+    const el = document.getElementById('slider-label');
+    if (el) {
+      el.textContent = stepLabel(step);
+      el.style.color = step < 0 ? '#7ed6df' : '#e4940d';
+    }
     document.querySelectorAll('#slider-ticks span').forEach(sp => {
       sp.classList.toggle('active', parseInt(sp.dataset.step) === step);
     });
@@ -360,15 +478,127 @@
   }
 
   // ═══════════════════════════════════════════════════════════════════
+  // CUSTOM SOURCES
+  // ═══════════════════════════════════════════════════════════════════
+  const CUSTOM_COLORS = ['#e4940d','#27ae60','#3498db','#8834cc','#ca1e66','#0ccbde'];
+  let csLat = null, csLng = null, csColor = CUSTOM_COLORS[0];
+  let pickingSourceLocation = false;
+
+  function loadCustomSources() {
+    let saved = [];
+    try { saved = JSON.parse(localStorage.getItem('customSources') || '[]'); } catch(e) {}
+    saved.forEach(s => {
+      s.enabled = true;
+      SOURCES.push(s);
+      sourceMarkers[s.key] = L.marker([s.lat,s.lng],{icon:circleIcon(s.color,16)}).addTo(map)
+        .bindPopup(`<b style="color:${s.color}">${s.name}</b><br><span style="color:#aaa">${getSmell(s)}</span>`);
+    });
+  }
+
+  function saveCustomSourcesStorage() {
+    try { localStorage.setItem('customSources', JSON.stringify(SOURCES.filter(s => s.custom))); } catch(e) {}
+  }
+
+  function openCustomSourceForm() {
+    csLat = null; csLng = null; csColor = CUSTOM_COLORS[0];
+    document.getElementById('cs-name').value  = '';
+    document.getElementById('cs-smell').value = '';
+    document.getElementById('cs-loc-display').textContent = T().csLocNone;
+    renderColorSwatches();
+    applyLangCustomForm();
+    document.getElementById('cs-overlay').classList.add('open');
+    document.getElementById('sources-panel').classList.remove('open');
+  }
+
+  function closeCustomSourceForm() {
+    document.getElementById('cs-overlay').classList.remove('open');
+    cancelPickLocation();
+  }
+
+  function renderColorSwatches() {
+    document.getElementById('cs-colors').innerHTML = CUSTOM_COLORS.map(c =>
+      `<div class="cs-swatch${c===csColor?' selected':''}" style="background:${c}" onclick="selectColor('${c}')"></div>`
+    ).join('');
+  }
+
+  function selectColor(c) { csColor = c; renderColorSwatches(); }
+
+  function startPickLocation() {
+    pickingSourceLocation = true;
+    document.getElementById('cs-overlay').classList.remove('open');
+    const banner = document.getElementById('pick-banner');
+    banner.textContent = T().csPickBanner;
+    banner.style.display = 'block';
+  }
+
+  function cancelPickLocation() {
+    pickingSourceLocation = false;
+    document.getElementById('pick-banner').style.display = 'none';
+  }
+
+  function applyLangCustomForm() {
+    document.getElementById('cs-title').textContent     = T().csTitle;
+    document.getElementById('cs-lbl-name').textContent  = T().csName;
+    document.getElementById('cs-lbl-smell').textContent = T().csSmell;
+    document.getElementById('cs-lbl-color').textContent = T().csColor;
+    document.getElementById('cs-lbl-loc').textContent   = T().csLoc;
+    document.getElementById('cs-loc-btn').textContent   = T().csLocBtn;
+    document.getElementById('cs-cancel').textContent    = T().csCancel;
+    document.getElementById('cs-save').textContent      = T().csSave;
+  }
+
+  function saveCustomSource() {
+    const name  = document.getElementById('cs-name').value.trim();
+    const smell = document.getElementById('cs-smell').value.trim();
+    if (!name)  { alert(T().csNameReq); return; }
+    if (!csLat) { alert(T().csLocReq); return; }
+    const key = 'CUSTOM_' + Date.now();
+    const s = { key, name, lat:csLat, lng:csLng, color:csColor, custom:true,
+                smell:{ nl:smell||name, en:smell||name }, enabled:true };
+    SOURCES.push(s);
+    sourceMarkers[key] = L.marker([s.lat,s.lng],{icon:circleIcon(s.color,16)}).addTo(map)
+      .bindPopup(`<b style="color:${s.color}">${s.name}</b><br><span style="color:#aaa">${getSmell(s)}</span>`);
+    saveCustomSourcesStorage();
+    buildSourcesPanel();
+    closeCustomSourceForm();
+    if (lastWind) analyse(lastWind.dir, lastWind.spd);
+  }
+
+  function removeCustomSource(key) {
+    const idx = SOURCES.findIndex(s => s.key === key);
+    if (idx === -1) return;
+    if (sourceMarkers[key]) { map.removeLayer(sourceMarkers[key]); delete sourceMarkers[key]; }
+    SOURCES.splice(idx, 1);
+    saveCustomSourcesStorage();
+    buildSourcesPanel();
+    if (lastWind) analyse(lastWind.dir, lastWind.spd);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
   // SOURCES PANEL
   // ═══════════════════════════════════════════════════════════════════
   function buildSourcesPanel() {
-    document.getElementById('sources-panel').innerHTML = SOURCES.map(s => `
+    const builtIn = SOURCES.filter(s => !s.custom);
+    const custom  = SOURCES.filter(s =>  s.custom);
+    let html = builtIn.map(s => `
       <div class="src-row">
-        <input type="checkbox" id="chk-${s.key}" checked
+        <input type="checkbox" id="chk-${s.key}" ${s.enabled!==false?'checked':''}
                onchange="onSourceToggle('${s.key}', this.checked)">
         <label for="chk-${s.key}">${s.name}</label>
       </div>`).join('');
+    if (custom.length) {
+      html += `<div style="border-top:1px solid #1a3a6e;margin:5px 0"></div>`;
+      html += custom.map(s => `
+        <div class="src-row">
+          <input type="checkbox" id="chk-${s.key}" ${s.enabled!==false?'checked':''}
+                 onchange="onSourceToggle('${s.key}', this.checked)">
+          <label for="chk-${s.key}">${s.name}</label>
+          <button class="src-del" onclick="removeCustomSource('${s.key}')" title="Remove">×</button>
+        </div>`).join('');
+    }
+    html += `<button class="src-add" onclick="openCustomSourceForm()">${T().csAddBtn}</button>`;
+    html += `<a class="src-suggest" href="https://github.com/vredeling/smell-tracker/issues/new?title=Suggest+smell+source" target="_blank" rel="noopener">${T().csSuggest}</a>`;
+    document.getElementById('sources-panel').innerHTML = html;
   }
 
   function toggleSourcesPanel() {
@@ -396,13 +626,17 @@
   // ═══════════════════════════════════════════════════════════════════
   // DRAW
   // ═══════════════════════════════════════════════════════════════════
-  function drawCones(windFrom, ws) {
+  function drawCones(windFrom, ws, forecast = false) {
     coneLayers.forEach(l => map.removeLayer(l));
     coneLayers = [];
     SOURCES.filter(s => s.enabled).forEach(s => {
       coneLayers.push(L.polygon(coneLatLngs(s.lat,s.lng,windFrom,ws), {
-        color:s.color, weight:1.5, opacity:.7,
-        fillColor:s.color, fillOpacity:.18, interactive:false
+        color:s.color, weight:1.5,
+        opacity:    forecast ? 0.5 : 0.7,
+        fillColor:  s.color,
+        fillOpacity:forecast ? 0.08 : 0.18,
+        dashArray:  forecast ? '8 6' : null,
+        interactive:false
       }).addTo(map));
     });
   }
@@ -434,7 +668,7 @@
 
   function easeInOut(t) { return t<0.5 ? 2*t*t : -1+(4-2*t)*t; }
 
-  function animateTo(target, onDone) {
+  function animateTo(target, onDone, forecast = false) {
     if (animFrame) cancelAnimationFrame(animFrame);
     const from  = displayWind ? {...displayWind} : {...target};
     const start = performance.now();
@@ -443,7 +677,7 @@
       const t = Math.min((now-start)/dur, 1);
       const w = lerpWind(from, target, easeInOut(t));
       displayWind = w;
-      drawCones(w.dir, w.spd);
+      drawCones(w.dir, w.spd, forecast);
       if (loc) drawArrow(w.dir);
       updateWindWidget(w.dir, w.spd);
       if (t < 1) {
@@ -460,21 +694,31 @@
   // WIND INTERPOLATION ACROSS HISTORY
   // ═══════════════════════════════════════════════════════════════════
   function getWindAtStep(step) {
-    // step 0=now (half-hourly steps), windHistory is hourly: [now, -1h, -2h, -3h]
-    const hourIdx = Math.floor(step / 2);
-    const frac    = (step % 2) / 2;
-    const a = windHistory[Math.min(hourIdx,   windHistory.length-1)];
-    const b = windHistory[Math.min(hourIdx+1, windHistory.length-1)];
-    return lerpWind(a, b, frac);
+    if (step >= 0) {
+      // Past or now: step 0=now, step 2=-1h, step 16=-8h
+      const hourIdx = Math.floor(step / 2);
+      const frac    = (step % 2) / 2;
+      const a = windPast[Math.min(hourIdx,   windPast.length - 1)];
+      const b = windPast[Math.min(hourIdx+1, windPast.length - 1)];
+      return lerpWind(a, b, frac);
+    } else {
+      // Future: step -1=+30min, step -2=+1h, step -16=+8h
+      const abs      = -step;
+      const hourIdx  = Math.floor(abs / 2);
+      const frac     = (abs % 2) / 2;
+      const a = hourIdx === 0 ? windPast[0] : windFuture[Math.min(hourIdx - 1, windFuture.length - 1)];
+      const b = windFuture[Math.min(hourIdx, windFuture.length - 1)];
+      return lerpWind(a, b, frac);
+    }
   }
 
   // ═══════════════════════════════════════════════════════════════════
   // ANALYSE
   // ═══════════════════════════════════════════════════════════════════
-  function analyse(windFrom, ws) {
+  function analyse(windFrom, ws, forecast = false) {
     lastWind    = {dir:windFrom, spd:ws};
     displayWind = {dir:windFrom, spd:ws};
-    drawCones(windFrom, ws);
+    drawCones(windFrom, ws, forecast);
     drawArrow(windFrom);
     updateWindWidget(windFrom, ws);
 
@@ -496,7 +740,7 @@
 
   function analyseStep(step) {
     const w = getWindAtStep(step);
-    analyse(w.dir, w.spd);
+    analyse(w.dir, w.spd, step < 0);
   }
 
   // ═══════════════════════════════════════════════════════════════════
@@ -523,31 +767,31 @@
       const ws = d?.current?.wind_speed_10m;
       if (typeof wd!=='number'||typeof ws!=='number') throw new Error('Onverwacht API-antwoord');
 
-      // Build wind history from hourly data: [now, -1h, -2h, -3h]
-      const times = d.hourly.time;           // ISO strings
+      // Build wind history and forecast from hourly data
+      const times = d.hourly.time;
       const hdirs = d.hourly.wind_direction_10m;
       const hspds = d.hourly.wind_speed_10m;
       const now   = new Date();
-      // find index of current hour
       let ci = times.length - 1;
       for (let i=0; i<times.length; i++) {
         if (new Date(times[i]) > now) { ci = Math.max(0, i-1); break; }
       }
-      windHistory = [];
-      windHistory.push({dir:wd, spd:ws}); // step 0 = live current reading
-      for (let h=1; h<=3; h++) {
+      windPast = [{dir:wd, spd:ws}]; // index 0 = live current
+      for (let h=1; h<=8; h++) {
         const idx = ci - h;
-        if (idx >= 0) {
-          windHistory.push({dir:hdirs[idx], spd:hspds[idx]});
-        } else {
-          windHistory.push({...windHistory[windHistory.length-1]}); // repeat if not available
-        }
+        windPast.push(idx >= 0 ? {dir:hdirs[idx], spd:hspds[idx]} : {...windPast[windPast.length-1]});
+      }
+      windFuture = [];
+      for (let h=1; h<=8; h++) {
+        const idx = ci + h;
+        const fallback = windFuture.length ? windFuture[windFuture.length-1] : {dir:wd, spd:ws};
+        windFuture.push(idx < hdirs.length ? {dir:hdirs[idx], spd:hspds[idx]} : {...fallback});
       }
 
-      // Reset slider to "now"
+      // Reset slider to "now" (center)
       currentStep = 0;
       const range = document.getElementById('time-range');
-      if (range) range.value = STEPS; // rightmost = now
+      if (range) range.value = FUTURE_STEPS; // center = now
       showSlider();
       updateSliderLabel(0);
       analyse(wd, ws);
@@ -560,13 +804,13 @@
   // SLIDER EVENT
   // ═══════════════════════════════════════════════════════════════════
   document.getElementById('time-range').addEventListener('input', function() {
-    const step = STEPS - parseInt(this.value); // invert: right=now, left=past
-    const prev = currentStep;
+    // slider left=past, center=now, right=future
+    const step = FUTURE_STEPS - parseInt(this.value);
     currentStep = step;
     updateSliderLabel(step);
-    if (windHistory.length === 0) return;
+    if (windPast.length === 0) return;
     const target = getWindAtStep(step);
-    animateTo(target, () => analyseStep(step));
+    animateTo(target, () => analyseStep(step), step < 0);
   });
 
   // ═══════════════════════════════════════════════════════════════════
@@ -617,6 +861,13 @@
   // MAP CLICK
   // ═══════════════════════════════════════════════════════════════════
   map.on('click', async e => {
+    if (pickingSourceLocation) {
+      csLat = e.latlng.lat; csLng = e.latlng.lng;
+      cancelPickLocation();
+      document.getElementById('cs-loc-display').textContent = `${csLat.toFixed(4)}, ${csLng.toFixed(4)}`;
+      document.getElementById('cs-overlay').classList.add('open');
+      return;
+    }
     loc = {lat:e.latlng.lat, lng:e.latlng.lng, name:`${e.latlng.lat.toFixed(4)}, ${e.latlng.lng.toFixed(4)}`};
     updateUser(); await loadWind();
   });
@@ -632,6 +883,15 @@
     document.getElementById('t-geo').textContent     = T().geo;
     document.getElementById('lang-btn').textContent    = lang.toUpperCase();
     document.getElementById('sources-btn').textContent = T().sources;
+    document.getElementById('ab-title').textContent  = T().aboutTitle;
+    document.getElementById('ab-body1').textContent  = T().aboutBody1;
+    document.getElementById('ab-body2').textContent  = T().aboutBody2;
+    document.getElementById('ab-body3').textContent  = T().aboutBody3;
+    document.getElementById('about-close').textContent = T().aboutClose;
+    applyLangCustomForm();
+    buildSourcesPanel();
+    const banner = document.getElementById('pick-banner');
+    if (banner.style.display !== 'none') banner.textContent = T().csPickBanner;
     const d = tDirs();
     document.getElementById('wi-n').textContent = d[0];
     document.getElementById('wi-s').textContent = d[8];
@@ -640,6 +900,9 @@
     buildSliderTicks();
     updateSliderLabel(currentStep);
   }
+
+  function openAbout()  { document.getElementById('about-overlay').classList.add('open'); }
+  function closeAbout() { document.getElementById('about-overlay').classList.remove('open'); }
 
   function toggleLang() {
     lang = lang==='nl' ? 'en' : 'nl';
@@ -667,6 +930,7 @@
   // INIT
   // ═══════════════════════════════════════════════════════════════════
   buildSourcesPanel();
+  loadCustomSources();
   applyLang();
   setBar(T().init);
 </script>
