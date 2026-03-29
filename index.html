@@ -79,6 +79,8 @@
     .src-add:hover{background:#0f346022}
     .src-suggest{display:block;text-align:center;margin-top:7px;padding-top:7px;border-top:1px solid #1a3a6e;font-size:.76rem;color:#445;text-decoration:none}
     .src-suggest:hover{color:#7ed6df}
+    .src-reverse{display:flex;align-items:center;gap:8px;padding:6px 2px;margin-top:4px;cursor:pointer;font-size:.83rem;color:#aaa}
+    .src-reverse input[type=checkbox]{cursor:pointer;width:15px;height:15px;accent-color:#aaaaaa;flex-shrink:0}
   </style>
 </head>
 <body>
@@ -184,7 +186,8 @@
       csAddBtn:      '＋ Bron toevoegen',
       csSuggest:     'Ontbreekt er een bron? Stel voor op GitHub ↗',
       csNameReq:     'Vul een naam in.',
-      csLocReq:      'Stel een locatie in op de kaart.'
+      csLocReq:      'Stel een locatie in op de kaart.',
+      reverseToggle: '🔍 Waar kan de geur vandaan komen?'
     },
     en: {
       title:       '🌬️ Amsterdam Smell Tracker',
@@ -231,7 +234,8 @@
       csAddBtn:      '＋ Add source',
       csSuggest:     'Missing a source? Suggest one on GitHub ↗',
       csNameReq:     'Please enter a name.',
-      csLocReq:      'Please set a location on the map.'
+      csLocReq:      'Please set a location on the map.',
+      reverseToggle: '🔍 Where could the smell come from?'
     }
   };
 
@@ -293,11 +297,13 @@
       .bindPopup(`<b style="color:${s.color}">${s.name}</b><br><span style="color:#aaa">${getSmell(s)}</span>`);
   });
 
-  let userMarker = null;
-  let coneLayers = [];
-  let arrowLayer = null;
-  let lastWind   = null;
-  let loc        = null;
+  let userMarker    = null;
+  let coneLayers    = [];
+  let arrowLayer    = null;
+  let reversePlume  = null;
+  let showReverse   = false;
+  let lastWind      = null;
+  let loc           = null;
 
   // ═══════════════════════════════════════════════════════════════════
   // TIME SLIDER
@@ -596,6 +602,8 @@
           <button class="src-del" onclick="removeCustomSource('${s.key}')" title="Remove">×</button>
         </div>`).join('');
     }
+    html += `<div style="border-top:1px solid #1a3a6e;margin:8px 0 0"></div>`;
+    html += `<label class="src-reverse"><input type="checkbox" ${showReverse?'checked':''} onchange="toggleReversePlume()">${T().reverseToggle}</label>`;
     html += `<button class="src-add" onclick="openCustomSourceForm()">${T().csAddBtn}</button>`;
     html += `<a class="src-suggest" href="https://github.com/vredeling/smell-tracker/issues/new?title=Suggest+smell+source" target="_blank" rel="noopener">${T().csSuggest}</a>`;
     document.getElementById('sources-panel').innerHTML = html;
@@ -639,6 +647,7 @@
         interactive:false
       }).addTo(map));
     });
+    drawReversePlume(windFrom, ws);
   }
 
   function drawArrow(windFrom) {
@@ -650,6 +659,24 @@
       [[loc.lat,loc.lng],[loc.lat+Math.cos(rad)*len, loc.lng+Math.sin(rad)*len/cosLat]],
       {color:'#fff',weight:2,opacity:.5,dashArray:'5 4'}
     ).addTo(map);
+  }
+
+  function toggleReversePlume() {
+    showReverse = !showReverse;
+    buildSourcesPanel();
+    if (lastWind) drawReversePlume(lastWind.dir, lastWind.spd);
+  }
+
+  function drawReversePlume(windFrom, ws) {
+    if (reversePlume) { map.removeLayer(reversePlume); reversePlume = null; }
+    if (!showReverse || !loc) return;
+    // Cone points upwind from user (windFrom direction = where wind comes from)
+    const latlngs = coneLatLngs(loc.lat, loc.lng, (windFrom + 180) % 360, ws);
+    reversePlume = L.polygon(latlngs, {
+      color: '#aaaaaa', weight: 2.5, opacity: 1,
+      fillColor: '#aaaaaa', fillOpacity: 0.25,
+      dashArray: '6 5', interactive: false
+    }).addTo(map);
   }
 
   // ═══════════════════════════════════════════════════════════════════
@@ -726,15 +753,17 @@
     const ha   = halfAngle(ws);
     const meta = `<span style="color:#556;font-size:.78rem"> · ${T().windmeta(dname(windFrom),windFrom,parseFloat(ws).toFixed(1),ha)}</span>`;
 
+    const cb = forecast ? '' : complaintBtn();
+
     if (up.length===0) {
       setBar(`<span style="color:#badc58;font-weight:600">${T().none}</span> ${T().nonedetail}${meta}`);
     } else if (up.length===1) {
       const s=up[0];
-      setBar(`<span style="color:${s.color};font-weight:600">${s.name}</span> ${T().source} <em>${getSmell(s)}</em>.${meta}${complaintBtn()}`);
+      setBar(`<span style="color:${s.color};font-weight:600">${s.name}</span> ${T().source} <em>${getSmell(s)}</em>.${meta}${cb}`);
     } else {
       const names  = up.map(s=>`<span style="color:${s.color};font-weight:600">${s.name}</span>`).join(', ');
       const smells = [...new Set(up.map(s=>getSmell(s)))].join(' / ');
-      setBar(`<span style="color:#ff7979;font-weight:600">${T().multi}</span> ${names} — ${T().multimix} <em>${smells}</em>.${meta}${complaintBtn()}`);
+      setBar(`<span style="color:#ff7979;font-weight:600">${T().multi}</span> ${names} — ${T().multimix} <em>${smells}</em>.${meta}${cb}`);
     }
   }
 
