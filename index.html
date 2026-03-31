@@ -6,11 +6,11 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Geurtracker">
+  <meta name="apple-mobile-web-app-title" content="Stank-tracker">
   <meta name="theme-color" content="#16213e">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌬️</text></svg>">
   <link rel="manifest" id="manifest-link">
-  <title>Amsterdam Geurtracker</title>
+  <title>Amsterdam Stank-tracker</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
   <style>
@@ -86,7 +86,7 @@
 <body>
 
 <div id="hdr">
-  <strong id="t-title">🌬️ Amsterdam Geurtracker</strong>
+  <strong id="t-title">🌬️ Amsterdam Stank-tracker</strong>
   <input id="qry" placeholder="Voer een adres in…"/>
   <button class="btn" style="background:#e94560;color:#fff" onclick="doSearch()" id="t-search">Zoeken</button>
   <button class="btn" style="background:#0f3460;color:#eee" onclick="doGeo()" id="t-geo">📍 Mijn locatie</button>
@@ -142,7 +142,7 @@
   // ═══════════════════════════════════════════════════════════════════
   const LANG = {
     nl: {
-      title:       '🌬️ Amsterdam Geurtracker',
+      title:       '🌬️ Amsterdam Stank-tracker',
       placeholder: 'Voer een adres in…',
       search:      'Zoeken',
       geo:         '📍 Mijn locatie',
@@ -155,7 +155,7 @@
       windfetch:   n => `⏳ Winddata ophalen voor ${n}…`,
       windfail:    e => `⚠️ Winddata ophalen mislukt: ${e} — <a href="#" onclick="loadWind();return false" style="color:#7ed6df">Opnieuw</a>`,
       none:        '✅ Geen van de bekende bronnen staat direct bovenstrooms.',
-      nonedetail:  'De geur heeft mogelijk een andere oorzaak, of de wind is recent gedraaid.',
+      nonedetail:  'De stank heeft mogelijk een andere oorzaak, of de wind is recent gedraaid.',
       multi:       '⚠️ Meerdere bronnen bovenstrooms:',
       multimix:    'mogelijk een mengeling van',
       source:      'is de meest waarschijnlijke bron — verwacht een geur van',
@@ -169,13 +169,13 @@
       dirs: ['N','NNO','NO','ONO','O','OZO','ZO','ZZO','Z','ZZW','ZW','WZW','W','WNW','NW','NNW'],
       east: 'O',
       aboutTitle: 'Over deze app',
-      aboutBody1: 'De Amsterdam Geurtracker is een hulpmiddel om te beoordelen of een industriële bron in de buurt mogelijk de oorzaak is van een geur die je ruikt. De app combineert jouw locatie met actuele winddata om een verspreiding te schatten.',
-      aboutBody2: 'De resultaten zijn indicatief. Het model is een vereenvoudigde berekening en houdt geen rekening met alle factoren die de verspreiding van geuren beïnvloeden. Er kunnen geen rechten worden ontleend aan de uitkomsten.',
-      aboutBody3: 'Is er sprake van geuroverlast? Gebruik de knop "📢 Meld overlast" om een officiële klacht in te dienen bij de bevoegde instantie.',
+      aboutBody1: 'De Amsterdam Stank-tracker is een hulpmiddel om te beoordelen of een industriële bron in de buurt mogelijk de oorzaak is van een stank die je ruikt. De app combineert jouw locatie met actuele winddata om een verspreiding te schatten.',
+      aboutBody2: 'De resultaten zijn indicatief. Het model is een vereenvoudigde berekening en houdt geen rekening met alle factoren die de verspreiding van stank beïnvloeden. Er kunnen geen rechten worden ontleend aan de uitkomsten.',
+      aboutBody3: 'Is er sprake van stankoverlast? Gebruik de knop "📢 Meld overlast" om een officiële klacht in te dienen bij de bevoegde instantie.',
       aboutClose: 'Sluiten',
       csTitle:       'Bron toevoegen',
       csName:        'Naam',
-      csSmell:       'Geurtype (omschrijving)',
+      csSmell:       'Stanktype (omschrijving)',
       csColor:       'Kleur',
       csLoc:         'Locatie op de kaart',
       csLocBtn:      '📍 Klik op de kaart',
@@ -187,10 +187,10 @@
       csSuggest:     'Ontbreekt er een bron? Stel voor op GitHub ↗',
       csNameReq:     'Vul een naam in.',
       csLocReq:      'Stel een locatie in op de kaart.',
-      reverseToggle: '🔍 Waar kan de geur vandaan komen?'
+      reverseToggle: '🔍 Waar kan de stank vandaan komen?'
     },
     en: {
-      title:       '🌬️ Amsterdam Smell Tracker',
+      title:       '🌬️ Amsterdam Stench-tracker',
       placeholder: 'Enter an address…',
       search:      'Search',
       geo:         '📍 My Location',
@@ -203,7 +203,7 @@
       windfetch:   n => `⏳ Fetching live wind near ${n}…`,
       windfail:    e => `⚠️ Wind fetch failed: ${e} — <a href="#" onclick="loadWind();return false" style="color:#7ed6df">Retry</a>`,
       none:        '✅ None of the known sources are directly upwind.',
-      nonedetail:  'The smell may have another cause, or the wind has recently shifted.',
+      nonedetail:  'The stench may have another cause, or the wind has recently shifted.',
       multi:       '⚠️ Multiple sources upwind:',
       multimix:    'you may be smelling a mix of',
       source:      'is the most likely source — expect',
@@ -217,13 +217,13 @@
       dirs: ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'],
       east: 'E',
       aboutTitle: 'About this app',
-      aboutBody1: 'Amsterdam Smell Tracker is a tool to help assess whether a nearby industrial source may be responsible for a smell you notice. It combines your location with live wind data to estimate atmospheric dispersion.',
-      aboutBody2: 'Results are indicative only. The model uses a simplified calculation and does not account for all factors affecting odour dispersion. No rights can be derived from the outcomes.',
-      aboutBody3: 'Experiencing odour nuisance? Use the "📢 Report complaint" button to file an official report with the competent authority.',
+      aboutBody1: 'Amsterdam Stench-tracker is a tool to help assess whether a nearby industrial source may be responsible for a stench you notice. It combines your location with live wind data to estimate atmospheric dispersion.',
+      aboutBody2: 'Results are indicative only. The model uses a simplified calculation and does not account for all factors affecting stench dispersion. No rights can be derived from the outcomes.',
+      aboutBody3: 'Experiencing stench nuisance? Use the "📢 Report complaint" button to file an official report with the competent authority.',
       aboutClose: 'Close',
       csTitle:       'Add source',
       csName:        'Name',
-      csSmell:       'Smell type (description)',
+      csSmell:       'Stench type (description)',
       csColor:       'Colour',
       csLoc:         'Location on map',
       csLocBtn:      '📍 Click on map',
@@ -235,7 +235,7 @@
       csSuggest:     'Missing a source? Suggest one on GitHub ↗',
       csNameReq:     'Please enter a name.',
       csLocReq:      'Please set a location on the map.',
-      reverseToggle: '🔍 Where could the smell come from?'
+      reverseToggle: '🔍 Where could the stench come from?'
     }
   };
 
@@ -946,7 +946,7 @@
   // ═══════════════════════════════════════════════════════════════════
   try {
     const manifest = {
-      name:'Amsterdam Geurtracker', short_name:'Geurtracker',
+      name:'Amsterdam Stank-tracker', short_name:'Stank-tracker',
       start_url:'.', display:'standalone',
       background_color:'#1a1a2e', theme_color:'#16213e',
       icons:[{src:"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌬️</text></svg>",sizes:'any',type:'image/svg+xml'}]

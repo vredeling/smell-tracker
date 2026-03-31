@@ -1,6 +1,6 @@
-# 🌬️ Amsterdam Geurtracker
+# 🌬️ Amsterdam Stank-tracker
 
-A single-file progressive web app (PWA) that helps residents of neighbourhoods surrounding Amsterdam's Westpoort area identify the likely source of industrial smells based on live wind data.
+A single-file progressive web app (PWA) that helps residents of neighbourhoods surrounding Amsterdam's Westpoort area identify the likely source of industrial stenches based on live wind data.
 
 ## What it does
 
@@ -14,9 +14,9 @@ Hosted on GitHub Pages: [https://vredeling.github.io/smell-tracker](https://vred
 
 ---
 
-## Smell sources
+## Stench sources
 
-| Source | Typical smell |
+| Source | Typical stench |
 |---|---|
 | ICL Fertilizers BV | Scherp chemisch / verbrand rubber / uitlaatgassen |
 | Bunge | Weeïg zoet / gekookte pasta / geroosterde soja |
@@ -70,7 +70,7 @@ Upload `index.html` to any static host. GitHub Pages is recommended (free HTTPS,
 
 1. Open the GitHub Pages URL in **Safari**
 2. Tap the **Share** button → **Zet op beginscherm / Add to Home Screen**
-3. Tap **Add** — the app appears as "Geurtracker" with a 🌬️ icon
+3. Tap **Add** — the app appears as "Stank-tracker" with a 🌬️ icon
 
 ---
 
@@ -80,7 +80,7 @@ The plume cones are a simplified indicative model, not a certified dispersion ca
 
 In practice this means:
 
-- The cone shows where smell is *plausible*, not where it is *certain*
+- The cone shows where stench is *plausible*, not where it is *certain*
 - Stability class is estimated from wind speed alone — calm sunny afternoons and calm clear nights produce very different real-world dispersion but are treated identically here
 - No concentration gradient is shown — inside the cone is treated as a uniform zone
 - Source coordinates are approximate public-domain locations, not surveyed emission points
@@ -91,7 +91,7 @@ This app is intended as a residents' orientation tool and a starting point for f
 
 ## Complaint portal
 
-Smell complaints can be filed at:
+Stench complaints can be filed at:
 **[https://overlast.odnzkg.nl](https://overlast.odnzkg.nl)**
 
 This is operated by the Omgevingsdienst Noordzeekanaalgebied (ODNZKG), the environmental authority responsible for the Westpoort area.
