@@ -746,13 +746,18 @@
     lastWind    = {dir:windFrom, spd:ws};
     displayWind = {dir:windFrom, spd:ws};
     drawCones(windFrom, ws, forecast);
-    drawArrow(windFrom);
+    if (loc) drawArrow(windFrom);
     updateWindWidget(windFrom, ws);
 
-    const up   = SOURCES.filter(s => s.enabled && isUpwind(s.lat,s.lng,loc.lat,loc.lng,windFrom,ws));
     const ha   = halfAngle(ws);
     const meta = `<span style="color:#556;font-size:.78rem"> · ${T().windmeta(dname(windFrom),windFrom,parseFloat(ws).toFixed(1),ha)}</span>`;
 
+    if (!loc) {
+      setBar(`${T().init}${meta}`);
+      return;
+    }
+
+    const up   = SOURCES.filter(s => s.enabled && isUpwind(s.lat,s.lng,loc.lat,loc.lng,windFrom,ws));
     const cb = forecast ? '' : complaintBtn();
 
     if (up.length===0) {
@@ -776,14 +781,16 @@
   // WIND FETCH (current + 3h history)
   // ═══════════════════════════════════════════════════════════════════
   async function loadWind() {
-    if (!loc) return;
-    setBar(`<em style="color:#aaa">${T().windfetch(loc.name)}</em>`);
+    const fetchLat  = loc ? loc.lat  : 52.4;
+    const fetchLng  = loc ? loc.lng  : 4.9;
+    const fetchName = loc ? loc.name : 'Westpoort';
+    setBar(`<em style="color:#aaa">${T().windfetch(fetchName)}</em>`);
     try {
       const ctrl    = new AbortController();
       const timeout = setTimeout(()=>ctrl.abort(), 8000);
       const res = await fetch(
         `https://api.open-meteo.com/v1/forecast` +
-        `?latitude=${loc.lat}&longitude=${loc.lng}` +
+        `?latitude=${fetchLat}&longitude=${fetchLng}` +
         `&current=wind_speed_10m,wind_direction_10m` +
         `&hourly=wind_speed_10m,wind_direction_10m` +
         `&wind_speed_unit=ms&past_days=1&forecast_days=1`,
@@ -961,6 +968,7 @@
   buildSourcesPanel();
   loadCustomSources();
   applyLang();
+  loadWind();
   setBar(T().init);
 </script>
 </body>
