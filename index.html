@@ -159,6 +159,8 @@
       multi:       '⚠️ Meerdere bronnen bovenstrooms:',
       multimix:    'mogelijk een mengeling van',
       source:      'is de meest waarschijnlijke bron — verwacht een geur van',
+      sourceNear:  'staat mogelijk op de rand van de pluim — stank kan soms waarneembaar zijn',
+      sourceAlso:  'mogelijk ook aan de rand van de pluim:',
       windmeta:    (dir,deg,spd,ha) => `${dir} (${deg}°), ${spd} m/s, pluim ±${ha}°`,
       gpsloc:      'Jouw GPS-locatie',
       complaint:   '📢 Meld overlast',
@@ -170,7 +172,7 @@
       east: 'O',
       aboutTitle: 'Over deze app',
       aboutBody1: 'De Amsterdam Stank-tracker is een hulpmiddel om te beoordelen of een industriële bron in de buurt mogelijk de oorzaak is van een stank die je ruikt. De app combineert jouw locatie met actuele winddata om een verspreiding te schatten.',
-      aboutBody2: 'De resultaten zijn indicatief. Het model is een vereenvoudigde berekening en houdt geen rekening met alle factoren die de verspreiding van stank beïnvloeden. Er kunnen geen rechten worden ontleend aan de uitkomsten.',
+      aboutBody2: 'De resultaten zijn indicatief. De pluim is gebaseerd op de Briggs σy-formule (3σ-grens) en toont de zone waar stank waarneembaar kan zijn. Valt jouw locatie binnen de pluim, dan wordt de bijbehorende bron als meest waarschijnlijke oorzaak aangemerkt. Het model houdt geen rekening met alle verspreidingsfactoren. Er kunnen geen rechten aan de uitkomsten worden ontleend.',
       aboutBody3: 'Is er sprake van stankoverlast? Gebruik de knop "📢 Meld overlast" om een officiële klacht in te dienen bij de bevoegde instantie.',
       aboutClose: 'Sluiten',
       csTitle:       'Bron toevoegen',
@@ -207,6 +209,8 @@
       multi:       '⚠️ Multiple sources upwind:',
       multimix:    'you may be smelling a mix of',
       source:      'is the most likely source — expect',
+      sourceNear:  'may be at the edge of the plume — stench occasionally perceptible',
+      sourceAlso:  'also possibly at the edge of the plume:',
       windmeta:    (dir,deg,spd,ha) => `${dir} (${deg}°), ${spd} m/s, plume ±${ha}°`,
       gpsloc:      'Your GPS location',
       complaint:   '📢 Report complaint',
@@ -218,7 +222,7 @@
       east: 'E',
       aboutTitle: 'About this app',
       aboutBody1: 'Amsterdam Stench-tracker is a tool to help assess whether a nearby industrial source may be responsible for a stench you notice. It combines your location with live wind data to estimate atmospheric dispersion.',
-      aboutBody2: 'Results are indicative only. The model uses a simplified calculation and does not account for all factors affecting stench dispersion. No rights can be derived from the outcomes.',
+      aboutBody2: 'Results are indicative only. The plume is based on the Briggs σy formula (3σ boundary) and shows the zone where stench may be perceptible. If your location falls within a plume, that source is flagged as the most likely cause. The model does not account for all dispersion factors. No rights can be derived from the outcomes.',
       aboutBody3: 'Experiencing stench nuisance? Use the "📢 Report complaint" button to file an official report with the competent authority.',
       aboutClose: 'Close',
       csTitle:       'Add source',
@@ -315,6 +319,7 @@
   let windPast   = [];   // hourly: [now, -1h, ..., -8h]
   let windFuture = [];   // hourly: [+1h, +2h, ..., +8h]
   let currentStep  = 0;
+  let displayStep  = 0;    // fractional step position currently rendered
   let animFrame    = null;
   let displayWind  = null; // what's currently drawn
 
@@ -447,27 +452,45 @@
     return Math.round(Math.atan2(2 * sigmaY(1000, pgClass(ws)), 1000) * 180 / Math.PI);
   }
 
-  function coneLatLngs(srcLat, srcLng, windFrom, ws) {
+  function coneLatLngs(srcLat, srcLng, windFrom, ws, sigmaMult = 2, distMult = 1) {
     const cls     = pgClass(ws);
-    const maxDist = Math.min(2000 + ws * 1100, 13000); // metres
+    const maxDist = Math.min((2000 + ws * 1100) * distMult, 15000); // metres
     const windTo  = (windFrom + 180) % 360;
     const toRad   = windTo * Math.PI / 180;
     const cosLat  = Math.cos(srcLat * Math.PI / 180);
     const M       = 111320; // metres per degree latitude
     const N       = 14;     // points per edge — enough for smooth curves
 
-    const left = [], right = [];
+    const pL = (windTo - 90) * Math.PI / 180;
+    const pR = (windTo + 90) * Math.PI / 180;
+
+    // Blunt near-end: start slightly downwind with a minimum spread instead of a sharp apex.
+    // The Gaussian model is not valid at x=0, and sources have a physical footprint.
+    const tipX   = maxDist / (N * 4);
+    const tipSy  = Math.max(sigmaMult * 30, sigmaMult * sigmaY(tipX, cls));
+    const tipLat = srcLat + Math.cos(toRad) * tipX / M;
+    const tipLng = srcLng + Math.sin(toRad) * tipX / (M * cosLat);
+    const left  = [[tipLat + Math.cos(pL) * tipSy / M, tipLng + Math.sin(pL) * tipSy / (M * cosLat)]];
+    const right = [[tipLat + Math.cos(pR) * tipSy / M, tipLng + Math.sin(pR) * tipSy / (M * cosLat)]];
+
     for (let i = 1; i <= N; i++) {
-      const x  = (i / N) * maxDist;
-      const sy = 2 * sigmaY(x, cls);            // 2σ lateral boundary
+      const x    = (i / N) * maxDist;
+      const sy   = sigmaMult * sigmaY(x, cls);     // nσ lateral boundary
       const cLat = srcLat + Math.cos(toRad) * x / M;
       const cLng = srcLng + Math.sin(toRad) * x / (M * cosLat);
-      const pL = (windTo - 90) * Math.PI / 180;
-      const pR = (windTo + 90) * Math.PI / 180;
       left.push( [cLat + Math.cos(pL) * sy / M, cLng + Math.sin(pL) * sy / (M * cosLat)]);
       right.push([cLat + Math.cos(pR) * sy / M, cLng + Math.sin(pR) * sy / (M * cosLat)]);
     }
-    return [[srcLat, srcLng], ...left, ...right.reverse()];
+    // Rounded far-end cap: arc from left[N-1] through the furthest downwind point to right[N-1]
+    const syN   = sigmaMult * sigmaY(maxDist, cls);
+    const cLatN = srcLat + Math.cos(toRad) * maxDist / M;
+    const cLngN = srcLng + Math.sin(toRad) * maxDist / (M * cosLat);
+    const cap   = [];
+    for (let k = 1; k < 9; k++) {
+      const a = pL + (k / 9) * Math.PI; // sweeps from left edge → downwind tip → right edge
+      cap.push([cLatN + Math.cos(a) * syN / M, cLngN + Math.sin(a) * syN / (M * cosLat)]);
+    }
+    return [...left, ...cap, ...right.reverse()];
   }
 
   function pointInPolygon(lat, lng, poly) {
@@ -481,6 +504,9 @@
 
   function isUpwind(fla,fln,ula,uln,wf,ws) {
     return pointInPolygon(ula, uln, coneLatLngs(fla,fln,wf,ws));
+  }
+  function isUpwindWide(fla,fln,ula,uln,wf,ws) {
+    return pointInPolygon(ula, uln, coneLatLngs(fla,fln,wf,ws,3,1.2));
   }
 
   // ═══════════════════════════════════════════════════════════════════
@@ -717,6 +743,32 @@
     animFrame = requestAnimationFrame(frame);
   }
 
+  // Animate by interpolating through step space so the rotation always
+  // follows the actual data path — no angular shortcuts across hourly gaps.
+  function animateSteps(toStep, onDone) {
+    if (animFrame) cancelAnimationFrame(animFrame);
+    const fromStep = displayStep;
+    const start    = performance.now();
+    const dur      = 600;
+    function frame(now) {
+      const t    = Math.min((now-start)/dur, 1);
+      const step = fromStep + (toStep - fromStep) * easeInOut(t);
+      displayStep = step;
+      const w    = getWindAtStep(step);
+      displayWind = w;
+      drawCones(w.dir, w.spd, step < 0);
+      if (loc) drawArrow(w.dir);
+      updateWindWidget(w.dir, w.spd);
+      if (t < 1) {
+        animFrame = requestAnimationFrame(frame);
+      } else {
+        animFrame = null;
+        if (onDone) onDone();
+      }
+    }
+    animFrame = requestAnimationFrame(frame);
+  }
+
   // ═══════════════════════════════════════════════════════════════════
   // WIND INTERPOLATION ACROSS HISTORY
   // ═══════════════════════════════════════════════════════════════════
@@ -758,17 +810,24 @@
     }
 
     const up   = SOURCES.filter(s => s.enabled && isUpwind(s.lat,s.lng,loc.lat,loc.lng,windFrom,ws));
-    const cb = forecast ? '' : complaintBtn();
+    const near = SOURCES.filter(s => s.enabled && !up.includes(s) && isUpwindWide(s.lat,s.lng,loc.lat,loc.lng,windFrom,ws));
+    const cb   = forecast ? '' : complaintBtn();
+    const nearNote = near.length > 0
+      ? ` <span style="color:#aaa;font-size:.8rem">${T().sourceAlso} ${near.map(s=>`<span style="color:${s.color}">${s.name}</span>`).join(', ')}</span>`
+      : '';
 
-    if (up.length===0) {
-      setBar(`<span style="color:#badc58;font-weight:600">${T().none}</span> ${T().nonedetail}${meta}`);
-    } else if (up.length===1) {
+    if (up.length===1) {
       const s=up[0];
-      setBar(`<span style="color:${s.color};font-weight:600">${s.name}</span> ${T().source} <em>${getSmell(s)}</em>.${meta}${cb}`);
-    } else {
+      setBar(`<span style="color:${s.color};font-weight:600">${s.name}</span> ${T().source} <em>${getSmell(s)}</em>.${nearNote}${meta}${cb}`);
+    } else if (up.length>1) {
       const names  = up.map(s=>`<span style="color:${s.color};font-weight:600">${s.name}</span>`).join(', ');
       const smells = [...new Set(up.map(s=>getSmell(s)))].join(' / ');
-      setBar(`<span style="color:#ff7979;font-weight:600">${T().multi}</span> ${names} — ${T().multimix} <em>${smells}</em>.${meta}${cb}`);
+      setBar(`<span style="color:#ff7979;font-weight:600">${T().multi}</span> ${names} — ${T().multimix} <em>${smells}</em>.${nearNote}${meta}${cb}`);
+    } else if (near.length>0) {
+      const names = near.map(s=>`<span style="color:${s.color};font-weight:600">${s.name}</span>`).join(', ');
+      setBar(`${names} ${T().sourceNear}.${meta}${cb}`);
+    } else {
+      setBar(`<span style="color:#badc58;font-weight:600">${T().none}</span> ${T().nonedetail}${meta}`);
     }
   }
 
@@ -826,6 +885,7 @@
 
       // Reset slider to "now" (center)
       currentStep = 0;
+      displayStep = 0;
       const range = document.getElementById('time-range');
       if (range) range.value = FUTURE_STEPS; // center = now
       showSlider();
@@ -845,8 +905,7 @@
     currentStep = step;
     updateSliderLabel(step);
     if (windPast.length === 0) return;
-    const target = getWindAtStep(step);
-    animateTo(target, () => analyseStep(step), step < 0);
+    animateSteps(step, () => analyseStep(step));
   });
 
   // ═══════════════════════════════════════════════════════════════════
