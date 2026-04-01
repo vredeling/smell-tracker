@@ -6,62 +6,143 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Geurtracker">
-  <meta name="theme-color" content="#16213e">
+  <meta name="apple-mobile-web-app-title" content="Stank-tracker">
+  <meta name="theme-color" content="#121753">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌬️</text></svg>">
   <link rel="manifest" id="manifest-link">
-  <title>Amsterdam Geurtracker</title>
+  <title>Amsterdam Stank-tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rosario:wght@600&family=Spline+Sans:wght@400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
-    html,body{height:100%;font-family:-apple-system,sans-serif;background:#1a1a2e;color:#eee;display:flex;flex-direction:column}
-    #hdr{padding:10px 14px;background:#16213e;border-bottom:1px solid #0f3460;display:flex;gap:8px;align-items:center;flex-wrap:wrap;z-index:1000}
-    #hdr strong{color:#e94560;white-space:nowrap}
-    #qry{flex:1;min-width:160px;padding:6px 10px;border-radius:6px;border:1px solid #0f3460;background:#0f3460;color:#eee;font-size:.83rem;outline:none}
-    .btn{padding:6px 13px;border-radius:6px;border:none;cursor:pointer;font-weight:600;font-size:.82rem}
+    html,body{height:100%;font-family:'Spline Sans',system-ui,sans-serif;background:#f2f3f5;color:#121753;display:flex;flex-direction:column}
+    #hdr{padding:10px 14px;background:#fff;border-bottom:2px solid #e0e3ea;display:flex;gap:8px;align-items:center;flex-wrap:wrap;z-index:1000}
+    #hdr-logo{height:46px;margin:-5px 0;width:auto;flex-shrink:0}
+    #hdr strong{white-space:nowrap;font-family:'Rosario',serif;font-weight:800;font-size:1rem;text-transform:uppercase}
+    #hdr strong .title-stank{color:#121753}
+    #hdr strong .title-tracker{color:#5377db}
+    #qry{flex:1;min-width:160px;padding:6px 12px;border-radius:4px;border:1px solid #d1d5db;background:#f2f3f5;color:#121753;font-size:.83rem;outline:none;font-family:'Spline Sans',sans-serif}
+    #qry::placeholder{color:#9ca3af}
+    .btn{padding:6px 14px;border-radius:4px;border:none;cursor:pointer;font-weight:600;font-size:.82rem;font-family:'Spline Sans',sans-serif;letter-spacing:.02em;text-transform:uppercase}
     #map{flex:1;position:relative}
-    #bar{padding:10px 16px;background:#16213e;border-top:1px solid #0f3460;min-height:50px;font-size:.88rem;display:flex;align-items:center;flex-wrap:wrap;gap:6px}
-    .leaflet-popup-content-wrapper{background:#16213e!important;color:#eee!important;border:1px solid #0f3460!important;border-radius:8px!important}
-    .leaflet-popup-tip{background:#16213e!important}
+    #bar{padding:10px 16px;background:#121753;border-top:2px solid #1e2a5e;min-height:50px;font-size:.88rem;display:flex;align-items:center;flex-wrap:wrap;gap:6px;color:#fff}
+    .leaflet-popup-content-wrapper{background:#fff!important;color:#121753!important;border:1px solid #e0e3ea!important;border-radius:10px!important;box-shadow:0 4px 16px rgba(18,23,83,.15)!important}
+    .leaflet-popup-tip{background:#fff!important}
     .leaflet-popup-content{font-size:.83rem;line-height:1.5}
-    #wind-widget{background:rgba(22,33,62,.92);border:1px solid #0f3460;border-radius:12px;padding:10px 12px;text-align:center;cursor:default;user-select:none}
-    .complaint-btn{margin-left:10px;padding:4px 10px;background:#e94560;color:#fff;border-radius:5px;font-weight:600;font-size:.8rem;text-decoration:none;white-space:nowrap;display:inline-block}
+    #wind-widget{background:rgba(18,23,83,.95);border:1px solid #2a3770;border-radius:12px;padding:10px 12px;text-align:center;cursor:default;user-select:none;color:#fff}
+    .complaint-btn{margin-left:10px;padding:5px 14px;background:#d82a66;color:#fff;border-radius:4px;font-weight:600;font-size:.8rem;text-decoration:none;white-space:nowrap;display:inline-block;text-transform:uppercase;letter-spacing:.02em}
     .complaint-btn:hover{opacity:.85}
     #time-slider{display:none;position:absolute;bottom:28px;left:50%;transform:translateX(-50%);
-      z-index:1000;background:rgba(22,33,62,.95);border:1px solid #0f3460;border-radius:10px;
+      z-index:1000;background:rgba(18,23,83,.97);border:1px solid #2a3770;border-radius:12px;
       padding:9px 18px 7px;min-width:300px;max-width:calc(100% - 128px);text-align:center;pointer-events:auto}
     @media (max-width:500px){
       #time-slider{left:10px;right:118px;transform:none;min-width:0;max-width:none}
     }
-    #slider-label{color:#e4940d;font-size:.82rem;font-weight:700;margin-bottom:5px;letter-spacing:.03em}
-    #time-range{width:100%;accent-color:#e4940d;cursor:pointer;height:4px;touch-action:none}
+    #slider-label{color:#fff;font-size:.82rem;font-weight:700;margin-bottom:5px;letter-spacing:.03em}
+    #time-range{width:100%;accent-color:#d82a66;cursor:pointer;height:4px;touch-action:none}
     #slider-ticks{display:flex;justify-content:space-between;margin-top:4px}
-    #slider-ticks span{color:#445;font-size:.68rem}
-    #slider-ticks span.active{color:#e4940d;font-weight:700}
+    #slider-ticks span{color:#5a6a99;font-size:.68rem}
+    #slider-ticks span.active{color:#fff;font-weight:700}
     #sources-wrap{position:relative}
     #sources-panel{display:none;position:fixed;top:auto;left:50%;transform:translateX(-50%);
-      background:#16213e;border:1px solid #0f3460;border-radius:10px;
-      padding:10px 14px;z-index:9999;min-width:220px;max-width:90vw;box-shadow:0 4px 16px rgba(0,0,0,.5)}
+      background:#fff;border:1px solid #e0e3ea;border-radius:12px;
+      padding:10px 14px;z-index:9999;min-width:220px;max-width:90vw;box-shadow:0 8px 24px rgba(18,23,83,.18)}
     #sources-panel.open{display:block}
     .src-row{display:flex;align-items:center;gap:8px;padding:5px 0}
-    .src-row:not(:last-child){border-bottom:1px solid #1a3a6e}
-    .src-row label{flex:1;font-size:.83rem;color:#eee;cursor:pointer;white-space:nowrap}
-    .src-row input[type=checkbox]{cursor:pointer;width:15px;height:15px;accent-color:#e4940d;flex-shrink:0}
+    .src-row:not(:last-child){border-bottom:1px solid #e0e3ea}
+    .src-row label{flex:1;font-size:.83rem;color:#121753;cursor:pointer;white-space:nowrap}
+    .src-row input[type=checkbox]{cursor:pointer;width:15px;height:15px;accent-color:#c4dd68;flex-shrink:0}
+    #about-overlay{display:none;position:fixed;inset:0;background:rgba(18,23,83,.55);z-index:99999;align-items:center;justify-content:center}
+    #about-overlay.open{display:flex}
+    #about-box{background:#fff;border:1px solid #e0e3ea;border-radius:16px;padding:24px 26px;max-width:420px;width:90%;font-size:.85rem;line-height:1.6;color:#3d4a7a;position:relative;box-shadow:0 8px 32px rgba(18,23,83,.2)}
+    #about-box h2{color:#121753;font-size:1.05rem;margin-bottom:10px;font-family:'Spline Sans',sans-serif;font-weight:700}
+    #about-box p{margin-bottom:10px}
+    #about-box p:last-of-type{margin-bottom:16px}
+    #about-close{display:block;width:100%;padding:8px;border-radius:4px;border:none;background:#121753;color:#fff;cursor:pointer;font-size:.85rem;font-weight:600;text-transform:uppercase;letter-spacing:.02em;font-family:'Spline Sans',sans-serif}
+    #cs-overlay{display:none;position:fixed;inset:0;background:rgba(18,23,83,.55);z-index:99999;align-items:center;justify-content:center}
+    #cs-overlay.open{display:flex}
+    #cs-box{background:#fff;border:1px solid #e0e3ea;border-radius:16px;padding:24px 26px;max-width:360px;width:90%;font-size:.85rem;color:#3d4a7a;box-shadow:0 8px 32px rgba(18,23,83,.2)}
+    #cs-box h2{color:#121753;font-size:1.05rem;margin-bottom:14px;font-family:'Spline Sans',sans-serif;font-weight:700}
+    .cs-field{margin-bottom:12px}
+    .cs-field label{display:block;font-size:.78rem;color:#6b7280;margin-bottom:4px}
+    .cs-field input[type=text]{width:100%;padding:6px 10px;border-radius:8px;border:1px solid #d1d5db;background:#f9fafb;color:#121753;font-size:.83rem;outline:none;font-family:'Spline Sans',sans-serif}
+    #cs-colors{display:flex;gap:8px;flex-wrap:wrap;margin-top:2px}
+    .cs-swatch{width:24px;height:24px;border-radius:50%;cursor:pointer;border:2px solid transparent;flex-shrink:0}
+    .cs-swatch.selected{border-color:#121753;box-shadow:0 0 6px rgba(18,23,83,.35)}
+    #cs-loc-btn{padding:5px 12px;border-radius:4px;border:1px solid #d1d5db;background:#f9fafb;color:#121753;cursor:pointer;font-size:.8rem;margin-top:4px;font-family:'Spline Sans',sans-serif}
+    #cs-loc-display{font-size:.78rem;color:#8aa9ff;margin-top:5px;min-height:14px}
+    .cs-actions{display:flex;gap:8px;margin-top:16px}
+    .cs-actions button{flex:1;padding:8px;border-radius:4px;border:none;cursor:pointer;font-size:.85rem;font-weight:600;text-transform:uppercase;letter-spacing:.02em;font-family:'Spline Sans',sans-serif}
+    #cs-cancel{background:#f2f3f5;color:#121753}
+    #cs-save{background:#d82a66;color:#fff}
+    #pick-banner{display:none;position:fixed;top:0;left:0;right:0;z-index:99998;background:#c4dd68;color:#121753;text-align:center;padding:10px 14px;font-size:.88rem;font-weight:600;cursor:pointer}
+    .src-del{background:none;border:none;color:#9ca3af;font-size:1rem;cursor:pointer;padding:0 2px;line-height:1;flex-shrink:0}
+    .src-del:hover{color:#d82a66}
+    #sources-panel{max-height:80vh;overflow-y:auto}
+    .src-add{display:block;width:100%;margin-top:8px;padding:5px;border-radius:8px;border:1px dashed #d1d5db;background:none;color:#8aa9ff;cursor:pointer;font-size:.82rem}
+    .src-add:hover{background:#f2f3f5}
+    .src-suggest{display:block;text-align:center;margin-top:7px;padding-top:7px;border-top:1px solid #e0e3ea;font-size:.76rem;color:#9ca3af;text-decoration:none}
+    .src-suggest:hover{color:#8aa9ff}
+    .src-reverse{display:flex;align-items:center;gap:8px;padding:6px 2px;margin-top:4px;cursor:pointer;font-size:.83rem;color:#6b7280}
+    .src-reverse input[type=checkbox]{cursor:pointer;width:15px;height:15px;accent-color:#121753;flex-shrink:0}
   </style>
 </head>
 <body>
 
 <div id="hdr">
-  <strong id="t-title">🌬️ Amsterdam Geurtracker</strong>
+  <img id="hdr-logo" fetchpriority="high" decoding="async" alt="Adem Vrij aan het IJ logo"
+    src="https://ademvrijaanhetij.nl/wp-content/uploads/2024/12/Logos-Adem-vrij-aan-het-IJ-RGB_Hoofd-logo-400x204.webp"
+    srcset="https://ademvrijaanhetij.nl/wp-content/uploads/2024/12/Logos-Adem-vrij-aan-het-IJ-RGB_Hoofd-logo-200x102.webp 200w, https://ademvrijaanhetij.nl/wp-content/uploads/2024/12/Logos-Adem-vrij-aan-het-IJ-RGB_Hoofd-logo-400x204.webp 400w, https://ademvrijaanhetij.nl/wp-content/uploads/2024/12/Logos-Adem-vrij-aan-het-IJ-RGB_Hoofd-logo-600x307.webp 600w"
+    sizes="80px">
+  <strong id="t-title"><span class="title-stank">Stank</span><span class="title-tracker">-tracker</span></strong>
   <input id="qry" placeholder="Voer een adres in…"/>
-  <button class="btn" style="background:#e94560;color:#fff" onclick="doSearch()" id="t-search">Zoeken</button>
-  <button class="btn" style="background:#0f3460;color:#eee" onclick="doGeo()" id="t-geo">📍 Mijn locatie</button>
+  <button class="btn" style="background:#d82a66;color:#fff" onclick="doSearch()" id="t-search">Zoeken</button>
+  <button class="btn" style="background:#d82a66;color:#fff" onclick="doGeo()" id="t-geo">📍 Mijn locatie</button>
   <div id="sources-wrap">
-    <button class="btn" style="background:#1a1a2e;color:#aaa;border:1px solid #0f3460" onclick="toggleSourcesPanel()" id="sources-btn">🏭 Bronnen</button>
+    <button class="btn" style="background:#8aa9ff;color:#fff" onclick="toggleSourcesPanel()" id="sources-btn">🏭 Bronnen</button>
     <div id="sources-panel"></div>
   </div>
-  <button class="btn" style="background:#1a1a2e;color:#aaa;border:1px solid #0f3460" onclick="toggleLang()" id="lang-btn">NL</button>
+  <button class="btn" style="background:#8aa9ff;color:#fff" onclick="toggleLang()" id="lang-btn">NL</button>
+  <button class="btn" style="background:#8aa9ff;color:#fff" onclick="openAbout()" id="about-btn">?</button>
+</div>
+<div id="pick-banner" onclick="cancelPickLocation()"></div>
+<div id="cs-overlay">
+  <div id="cs-box">
+    <h2 id="cs-title"></h2>
+    <div class="cs-field">
+      <label id="cs-lbl-name"></label>
+      <input id="cs-name" type="text"/>
+    </div>
+    <div class="cs-field">
+      <label id="cs-lbl-smell"></label>
+      <input id="cs-smell" type="text"/>
+    </div>
+    <div class="cs-field">
+      <label id="cs-lbl-color"></label>
+      <div id="cs-colors"></div>
+    </div>
+    <div class="cs-field">
+      <label id="cs-lbl-loc"></label>
+      <button id="cs-loc-btn" onclick="startPickLocation()"></button>
+      <div id="cs-loc-display"></div>
+    </div>
+    <div class="cs-actions">
+      <button id="cs-cancel" onclick="closeCustomSourceForm()"></button>
+      <button id="cs-save" onclick="saveCustomSource()"></button>
+    </div>
+  </div>
+</div>
+<div id="about-overlay">
+  <div id="about-box">
+    <h2 id="ab-title"></h2>
+    <p id="ab-body1"></p>
+    <p id="ab-body2"></p>
+    <p id="ab-body3"></p>
+    <button id="about-close" onclick="closeAbout()" id="ab-close"></button>
+  </div>
 </div>
 <div id="map"></div>
 <div id="bar"></div>
@@ -72,7 +153,7 @@
   // ═══════════════════════════════════════════════════════════════════
   const LANG = {
     nl: {
-      title:       '🌬️ Amsterdam Geurtracker',
+      title:       'Stank-tracker',
       placeholder: 'Voer een adres in…',
       search:      'Zoeken',
       geo:         '📍 Mijn locatie',
@@ -83,23 +164,46 @@
       searching:   q => `🔍 Zoeken naar "${q}"…`,
       notfound:    e => `⚠️ Locatie niet gevonden: ${e}`,
       windfetch:   n => `⏳ Winddata ophalen voor ${n}…`,
-      windfail:    e => `⚠️ Winddata ophalen mislukt: ${e} — <a href="#" onclick="loadWind();return false" style="color:#7ed6df">Opnieuw</a>`,
+      windfail:    e => `⚠️ Winddata ophalen mislukt: ${e} — <a href="#" onclick="loadWind();return false" style="color:#8aa9ff">Opnieuw</a>`,
       none:        '✅ Geen van de bekende bronnen staat direct bovenstrooms.',
-      nonedetail:  'De geur heeft mogelijk een andere oorzaak, of de wind is recent gedraaid.',
+      nonedetail:  'De stank heeft mogelijk een andere oorzaak, of de wind is recent gedraaid.',
       multi:       '⚠️ Meerdere bronnen bovenstrooms:',
       multimix:    'mogelijk een mengeling van',
       source:      'is de meest waarschijnlijke bron — verwacht een geur van',
+      sourceNear:  'staat mogelijk op de rand van de pluim — stank kan soms waarneembaar zijn',
+      sourceAlso:  'mogelijk ook aan de rand van de pluim:',
       windmeta:    (dir,deg,spd,ha) => `${dir} (${deg}°), ${spd} m/s, pluim ±${ha}°`,
       gpsloc:      'Jouw GPS-locatie',
       complaint:   '📢 Meld overlast',
-      sliderNow:   'Nu',
-      sliderPast:  m => m < 60 ? `-${m} min` : (m%60===0 ? `-${m/60} uur` : `-${Math.floor(m/60)}u ${m%60}`),
+      sliderNow:    'Nu',
+      sliderPast:   m => m < 60 ? `-${m} min` : (m%60===0 ? `-${m/60} uur` : `-${Math.floor(m/60)}u ${m%60}`),
+      sliderFuture: m => m < 60 ? `+${m} min` : (m%60===0 ? `+${m/60} uur` : `+${Math.floor(m/60)}u ${m%60}`),
       sources:     '🏭 Bronnen',
       dirs: ['N','NNO','NO','ONO','O','OZO','ZO','ZZO','Z','ZZW','ZW','WZW','W','WNW','NW','NNW'],
-      east: 'O'
+      east: 'O',
+      aboutTitle: 'Over deze app',
+      aboutBody1: 'De Amsterdam Stank-tracker is een hulpmiddel om te beoordelen of een industriële bron in de buurt mogelijk de oorzaak is van een stank die je ruikt. De app combineert jouw locatie met actuele winddata om een verspreiding te schatten.',
+      aboutBody2: 'De resultaten zijn indicatief. De pluim is gebaseerd op de Briggs σy-formule (3σ-grens) en toont de zone waar stank waarneembaar kan zijn. Valt jouw locatie binnen de pluim, dan wordt de bijbehorende bron als meest waarschijnlijke oorzaak aangemerkt. Het model houdt geen rekening met alle verspreidingsfactoren. Er kunnen geen rechten aan de uitkomsten worden ontleend.',
+      aboutBody3: 'Is er sprake van stankoverlast? Gebruik de knop "📢 Meld overlast" om een officiële klacht in te dienen bij de bevoegde instantie.',
+      aboutClose: 'Sluiten',
+      csTitle:       'Bron toevoegen',
+      csName:        'Naam',
+      csSmell:       'Stanktype (omschrijving)',
+      csColor:       'Kleur',
+      csLoc:         'Locatie op de kaart',
+      csLocBtn:      '📍 Klik op de kaart',
+      csLocNone:     'Nog niet ingesteld',
+      csCancel:      'Annuleren',
+      csSave:        'Opslaan',
+      csPickBanner:  'Klik op de kaart om de locatie in te stellen. Tik hier om te annuleren.',
+      csAddBtn:      '＋ Bron toevoegen',
+      csSuggest:     'Ontbreekt er een bron? Stel voor op GitHub ↗',
+      csNameReq:     'Vul een naam in.',
+      csLocReq:      'Stel een locatie in op de kaart.',
+      reverseToggle: '🔍 Waar kan de stank vandaan komen?'
     },
     en: {
-      title:       '🌬️ Amsterdam Smell Tracker',
+      title:       'Stench-tracker',
       placeholder: 'Enter an address…',
       search:      'Search',
       geo:         '📍 My Location',
@@ -110,20 +214,43 @@
       searching:   q => `🔍 Searching for "${q}"…`,
       notfound:    e => `⚠️ Location not found: ${e}`,
       windfetch:   n => `⏳ Fetching live wind near ${n}…`,
-      windfail:    e => `⚠️ Wind fetch failed: ${e} — <a href="#" onclick="loadWind();return false" style="color:#7ed6df">Retry</a>`,
+      windfail:    e => `⚠️ Wind fetch failed: ${e} — <a href="#" onclick="loadWind();return false" style="color:#8aa9ff">Retry</a>`,
       none:        '✅ None of the known sources are directly upwind.',
-      nonedetail:  'The smell may have another cause, or the wind has recently shifted.',
+      nonedetail:  'The stench may have another cause, or the wind has recently shifted.',
       multi:       '⚠️ Multiple sources upwind:',
       multimix:    'you may be smelling a mix of',
       source:      'is the most likely source — expect',
+      sourceNear:  'may be at the edge of the plume — stench occasionally perceptible',
+      sourceAlso:  'also possibly at the edge of the plume:',
       windmeta:    (dir,deg,spd,ha) => `${dir} (${deg}°), ${spd} m/s, plume ±${ha}°`,
       gpsloc:      'Your GPS location',
       complaint:   '📢 Report complaint',
-      sliderNow:   'Now',
-      sliderPast:  m => m < 60 ? `-${m} min` : (m%60===0 ? `-${m/60} hr` : `-${Math.floor(m/60)}h ${m%60}`),
+      sliderNow:    'Now',
+      sliderPast:   m => m < 60 ? `-${m} min` : (m%60===0 ? `-${m/60} hr` : `-${Math.floor(m/60)}h ${m%60}`),
+      sliderFuture: m => m < 60 ? `+${m} min` : (m%60===0 ? `+${m/60} hr` : `+${Math.floor(m/60)}h ${m%60}`),
       sources:     '🏭 Sources',
       dirs: ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'],
-      east: 'E'
+      east: 'E',
+      aboutTitle: 'About this app',
+      aboutBody1: 'Amsterdam Stench-tracker is a tool to help assess whether a nearby industrial source may be responsible for a stench you notice. It combines your location with live wind data to estimate atmospheric dispersion.',
+      aboutBody2: 'Results are indicative only. The plume is based on the Briggs σy formula (3σ boundary) and shows the zone where stench may be perceptible. If your location falls within a plume, that source is flagged as the most likely cause. The model does not account for all dispersion factors. No rights can be derived from the outcomes.',
+      aboutBody3: 'Experiencing stench nuisance? Use the "📢 Report complaint" button to file an official report with the competent authority.',
+      aboutClose: 'Close',
+      csTitle:       'Add source',
+      csName:        'Name',
+      csSmell:       'Stench type (description)',
+      csColor:       'Colour',
+      csLoc:         'Location on map',
+      csLocBtn:      '📍 Click on map',
+      csLocNone:     'Not set',
+      csCancel:      'Cancel',
+      csSave:        'Save',
+      csPickBanner:  'Click on the map to set the source location. Tap here to cancel.',
+      csAddBtn:      '＋ Add source',
+      csSuggest:     'Missing a source? Suggest one on GitHub ↗',
+      csNameReq:     'Please enter a name.',
+      csLocReq:      'Please set a location on the map.',
+      reverseToggle: '🔍 Where could the stench come from?'
     }
   };
 
@@ -185,20 +312,25 @@
       .bindPopup(`<b style="color:${s.color}">${s.name}</b><br><span style="color:#aaa">${getSmell(s)}</span>`);
   });
 
-  let userMarker = null;
-  let coneLayers = [];
-  let arrowLayer = null;
-  let lastWind   = null;
-  let loc        = null;
+  let userMarker    = null;
+  let coneLayers    = [];
+  let arrowLayer    = null;
+  let reversePlume  = null;
+  let showReverse   = false;
+  let lastWind      = null;
+  let loc           = null;
 
   // ═══════════════════════════════════════════════════════════════════
   // TIME SLIDER
   // ═══════════════════════════════════════════════════════════════════
-  // 7 steps: 0=now, 1=-30m, 2=-1h, 3=-1h30, 4=-2h, 5=-2h30, 6=-3h
-  const STEPS      = 6;
-  const STEP_MINS  = 30;
-  let windHistory  = [];   // hourly readings: [now, -1h, -2h, -3h]
+  // Steps: negative = future (+8h), 0 = now, positive = past (-8h), 30 min per step
+  const PAST_STEPS   = 16;  // 8h of history
+  const FUTURE_STEPS = 16;  // 8h of forecast
+  const STEP_MINS    = 30;
+  let windPast   = [];   // hourly: [now, -1h, ..., -8h]
+  let windFuture = [];   // hourly: [+1h, +2h, ..., +8h]
   let currentStep  = 0;
+  let displayStep  = 0;    // fractional step position currently rendered
   let animFrame    = null;
   let displayWind  = null; // what's currently drawn
 
@@ -207,7 +339,7 @@
   sliderEl.id = 'time-slider';
   sliderEl.innerHTML = `
   <div id="slider-label">Nu</div>
-  <input type="range" id="time-range" min="0" max="${STEPS}" step="1" value="${STEPS}">
+  <input type="range" id="time-range" min="0" max="${PAST_STEPS + FUTURE_STEPS}" step="1" value="${FUTURE_STEPS}">
   <div id="slider-ticks"></div>`;
   map.getContainer().appendChild(sliderEl);
   L.DomEvent.disableClickPropagation(sliderEl);
@@ -216,27 +348,35 @@
   sliderEl.addEventListener('touchmove',  e => e.stopPropagation(), {passive: true});
   sliderEl.addEventListener('touchend',   e => e.stopPropagation(), {passive: true});
 
+  function stepLabel(step) {
+    if (step === 0)  return T().sliderNow;
+    if (step > 0)    return T().sliderPast(step * STEP_MINS);
+    return T().sliderFuture(-step * STEP_MINS);
+  }
+
   function buildSliderTicks() {
     const ticks = document.getElementById('slider-ticks');
     if (!ticks) return;
     ticks.innerHTML = '';
-    for (let i = STEPS; i >= 0; i--) {
-      const mins = i * STEP_MINS;
-      const lbl  = mins === 0 ? T().sliderNow : T().sliderPast(mins);
-      const sp   = document.createElement('span');
-      sp.textContent   = lbl;
-      sp.dataset.step  = i;
-      if (i === currentStep) sp.classList.add('active');
+    // Show a tick every 4 steps (2h), from past to future
+    const keySteps = [PAST_STEPS, 8, 4, 0, -4, -8, -FUTURE_STEPS];
+    keySteps.forEach(step => {
+      const sp = document.createElement('span');
+      sp.textContent  = stepLabel(step);
+      sp.dataset.step = step;
+      if (step === 0) sp.style.color = '#fff';
+      if (step < 0)   sp.style.color = '#fff';
+      if (step === currentStep) sp.classList.add('active');
       ticks.appendChild(sp);
-    }
+    });
   }
 
   function updateSliderLabel(step) {
-    const mins = step * STEP_MINS;
-    const lbl  = mins === 0 ? T().sliderNow : T().sliderPast(mins);
-    const el   = document.getElementById('slider-label');
-    if (el) el.textContent = lbl;
-    // update tick highlights
+    const el = document.getElementById('slider-label');
+    if (el) {
+      el.textContent = stepLabel(step);
+      el.style.color = '#fff';
+    }
     document.querySelectorAll('#slider-ticks span').forEach(sp => {
       sp.classList.toggle('active', parseInt(sp.dataset.step) === step);
     });
@@ -261,15 +401,15 @@
       div.id = 'wind-widget';
       div.innerHTML = `
       <svg width="72" height="72" viewBox="-36 -36 72 72">
-        <circle r="30" fill="none" stroke="#0f3460" stroke-width="1.5"/>
-        <text id="wi-n" y="-19" text-anchor="middle" fill="#556" font-size="8" font-family="sans-serif">N</text>
-        <text id="wi-s" y="25"  text-anchor="middle" fill="#556" font-size="8" font-family="sans-serif">Z</text>
-        <text id="wi-w" x="-22" y="4"  text-anchor="middle" fill="#556" font-size="8" font-family="sans-serif">W</text>
-        <text id="wi-e" x="22"  y="4"  text-anchor="middle" fill="#556" font-size="8" font-family="sans-serif">O</text>
+        <circle r="30" fill="none" stroke="#2a3770" stroke-width="1.5"/>
+        <text id="wi-n" y="-19" text-anchor="middle" fill="#8aa9ff" font-size="8" font-family="sans-serif">N</text>
+        <text id="wi-s" y="25"  text-anchor="middle" fill="#8aa9ff" font-size="8" font-family="sans-serif">Z</text>
+        <text id="wi-w" x="-22" y="4"  text-anchor="middle" fill="#8aa9ff" font-size="8" font-family="sans-serif">W</text>
+        <text id="wi-e" x="22"  y="4"  text-anchor="middle" fill="#8aa9ff" font-size="8" font-family="sans-serif">O</text>
         <g id="wind-arrow-group">
-          <line x1="0" y1="18" x2="0" y2="-16" stroke="#e4940d" stroke-width="3" stroke-linecap="round"/>
-          <polygon points="0,-24 -7,-12 7,-12" fill="#e4940d"/>
-          <circle r="3.5" fill="#e4940d"/>
+          <line x1="0" y1="18" x2="0" y2="-16" stroke="#d82a66" stroke-width="3" stroke-linecap="round"/>
+          <polygon points="0,-24 -7,-12 7,-12" fill="#d82a66"/>
+          <circle r="3.5" fill="#d82a66"/>
         </g>
       </svg>
       <div id="wi-speed" style="color:#eee;font-size:12px;font-weight:700;margin-top:2px;min-width:70px;text-align:center">—</div>
@@ -323,27 +463,45 @@
     return Math.round(Math.atan2(2 * sigmaY(1000, pgClass(ws)), 1000) * 180 / Math.PI);
   }
 
-  function coneLatLngs(srcLat, srcLng, windFrom, ws) {
+  function coneLatLngs(srcLat, srcLng, windFrom, ws, sigmaMult = 2, distMult = 1) {
     const cls     = pgClass(ws);
-    const maxDist = Math.min(2000 + ws * 1100, 13000); // metres
+    const maxDist = Math.min((2000 + ws * 1100) * distMult, 15000); // metres
     const windTo  = (windFrom + 180) % 360;
     const toRad   = windTo * Math.PI / 180;
     const cosLat  = Math.cos(srcLat * Math.PI / 180);
     const M       = 111320; // metres per degree latitude
     const N       = 14;     // points per edge — enough for smooth curves
 
-    const left = [], right = [];
+    const pL = (windTo - 90) * Math.PI / 180;
+    const pR = (windTo + 90) * Math.PI / 180;
+
+    // Blunt near-end: start slightly downwind with a minimum spread instead of a sharp apex.
+    // The Gaussian model is not valid at x=0, and sources have a physical footprint.
+    const tipX   = maxDist / (N * 4);
+    const tipSy  = Math.max(sigmaMult * 30, sigmaMult * sigmaY(tipX, cls));
+    const tipLat = srcLat + Math.cos(toRad) * tipX / M;
+    const tipLng = srcLng + Math.sin(toRad) * tipX / (M * cosLat);
+    const left  = [[tipLat + Math.cos(pL) * tipSy / M, tipLng + Math.sin(pL) * tipSy / (M * cosLat)]];
+    const right = [[tipLat + Math.cos(pR) * tipSy / M, tipLng + Math.sin(pR) * tipSy / (M * cosLat)]];
+
     for (let i = 1; i <= N; i++) {
-      const x  = (i / N) * maxDist;
-      const sy = 2 * sigmaY(x, cls);            // 2σ lateral boundary
+      const x    = (i / N) * maxDist;
+      const sy   = sigmaMult * sigmaY(x, cls);     // nσ lateral boundary
       const cLat = srcLat + Math.cos(toRad) * x / M;
       const cLng = srcLng + Math.sin(toRad) * x / (M * cosLat);
-      const pL = (windTo - 90) * Math.PI / 180;
-      const pR = (windTo + 90) * Math.PI / 180;
       left.push( [cLat + Math.cos(pL) * sy / M, cLng + Math.sin(pL) * sy / (M * cosLat)]);
       right.push([cLat + Math.cos(pR) * sy / M, cLng + Math.sin(pR) * sy / (M * cosLat)]);
     }
-    return [[srcLat, srcLng], ...left, ...right.reverse()];
+    // Rounded far-end cap: arc from left[N-1] through the furthest downwind point to right[N-1]
+    const syN   = sigmaMult * sigmaY(maxDist, cls);
+    const cLatN = srcLat + Math.cos(toRad) * maxDist / M;
+    const cLngN = srcLng + Math.sin(toRad) * maxDist / (M * cosLat);
+    const cap   = [];
+    for (let k = 1; k < 9; k++) {
+      const a = pL + (k / 9) * Math.PI; // sweeps from left edge → downwind tip → right edge
+      cap.push([cLatN + Math.cos(a) * syN / M, cLngN + Math.sin(a) * syN / (M * cosLat)]);
+    }
+    return [...left, ...cap, ...right.reverse()];
   }
 
   function pointInPolygon(lat, lng, poly) {
@@ -358,17 +516,134 @@
   function isUpwind(fla,fln,ula,uln,wf,ws) {
     return pointInPolygon(ula, uln, coneLatLngs(fla,fln,wf,ws));
   }
+  function isUpwindWide(fla,fln,ula,uln,wf,ws) {
+    return pointInPolygon(ula, uln, coneLatLngs(fla,fln,wf,ws,3,1.2));
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // CUSTOM SOURCES
+  // ═══════════════════════════════════════════════════════════════════
+  const CUSTOM_COLORS = ['#e4940d','#27ae60','#3498db','#8834cc','#ca1e66','#0ccbde'];
+  let csLat = null, csLng = null, csColor = CUSTOM_COLORS[0];
+  let pickingSourceLocation = false;
+
+  function loadCustomSources() {
+    let saved = [];
+    try { saved = JSON.parse(localStorage.getItem('customSources') || '[]'); } catch(e) {}
+    saved.forEach(s => {
+      s.enabled = true;
+      SOURCES.push(s);
+      sourceMarkers[s.key] = L.marker([s.lat,s.lng],{icon:circleIcon(s.color,16)}).addTo(map)
+        .bindPopup(`<b style="color:${s.color}">${s.name}</b><br><span style="color:#aaa">${getSmell(s)}</span>`);
+    });
+  }
+
+  function saveCustomSourcesStorage() {
+    try { localStorage.setItem('customSources', JSON.stringify(SOURCES.filter(s => s.custom))); } catch(e) {}
+  }
+
+  function openCustomSourceForm() {
+    csLat = null; csLng = null; csColor = CUSTOM_COLORS[0];
+    document.getElementById('cs-name').value  = '';
+    document.getElementById('cs-smell').value = '';
+    document.getElementById('cs-loc-display').textContent = T().csLocNone;
+    renderColorSwatches();
+    applyLangCustomForm();
+    document.getElementById('cs-overlay').classList.add('open');
+    document.getElementById('sources-panel').classList.remove('open');
+  }
+
+  function closeCustomSourceForm() {
+    document.getElementById('cs-overlay').classList.remove('open');
+    cancelPickLocation();
+  }
+
+  function renderColorSwatches() {
+    document.getElementById('cs-colors').innerHTML = CUSTOM_COLORS.map(c =>
+      `<div class="cs-swatch${c===csColor?' selected':''}" style="background:${c}" onclick="selectColor('${c}')"></div>`
+    ).join('');
+  }
+
+  function selectColor(c) { csColor = c; renderColorSwatches(); }
+
+  function startPickLocation() {
+    pickingSourceLocation = true;
+    document.getElementById('cs-overlay').classList.remove('open');
+    const banner = document.getElementById('pick-banner');
+    banner.textContent = T().csPickBanner;
+    banner.style.display = 'block';
+  }
+
+  function cancelPickLocation() {
+    pickingSourceLocation = false;
+    document.getElementById('pick-banner').style.display = 'none';
+  }
+
+  function applyLangCustomForm() {
+    document.getElementById('cs-title').textContent     = T().csTitle;
+    document.getElementById('cs-lbl-name').textContent  = T().csName;
+    document.getElementById('cs-lbl-smell').textContent = T().csSmell;
+    document.getElementById('cs-lbl-color').textContent = T().csColor;
+    document.getElementById('cs-lbl-loc').textContent   = T().csLoc;
+    document.getElementById('cs-loc-btn').textContent   = T().csLocBtn;
+    document.getElementById('cs-cancel').textContent    = T().csCancel;
+    document.getElementById('cs-save').textContent      = T().csSave;
+  }
+
+  function saveCustomSource() {
+    const name  = document.getElementById('cs-name').value.trim();
+    const smell = document.getElementById('cs-smell').value.trim();
+    if (!name)  { alert(T().csNameReq); return; }
+    if (!csLat) { alert(T().csLocReq); return; }
+    const key = 'CUSTOM_' + Date.now();
+    const s = { key, name, lat:csLat, lng:csLng, color:csColor, custom:true,
+                smell:{ nl:smell||name, en:smell||name }, enabled:true };
+    SOURCES.push(s);
+    sourceMarkers[key] = L.marker([s.lat,s.lng],{icon:circleIcon(s.color,16)}).addTo(map)
+      .bindPopup(`<b style="color:${s.color}">${s.name}</b><br><span style="color:#aaa">${getSmell(s)}</span>`);
+    saveCustomSourcesStorage();
+    buildSourcesPanel();
+    closeCustomSourceForm();
+    if (lastWind) analyse(lastWind.dir, lastWind.spd);
+  }
+
+  function removeCustomSource(key) {
+    const idx = SOURCES.findIndex(s => s.key === key);
+    if (idx === -1) return;
+    if (sourceMarkers[key]) { map.removeLayer(sourceMarkers[key]); delete sourceMarkers[key]; }
+    SOURCES.splice(idx, 1);
+    saveCustomSourcesStorage();
+    buildSourcesPanel();
+    if (lastWind) analyse(lastWind.dir, lastWind.spd);
+  }
 
   // ═══════════════════════════════════════════════════════════════════
   // SOURCES PANEL
   // ═══════════════════════════════════════════════════════════════════
   function buildSourcesPanel() {
-    document.getElementById('sources-panel').innerHTML = SOURCES.map(s => `
+    const builtIn = SOURCES.filter(s => !s.custom);
+    const custom  = SOURCES.filter(s =>  s.custom);
+    let html = builtIn.map(s => `
       <div class="src-row">
-        <input type="checkbox" id="chk-${s.key}" checked
+        <input type="checkbox" id="chk-${s.key}" ${s.enabled!==false?'checked':''}
                onchange="onSourceToggle('${s.key}', this.checked)">
         <label for="chk-${s.key}">${s.name}</label>
       </div>`).join('');
+    if (custom.length) {
+      html += `<div style="border-top:1px solid #1a3a6e;margin:5px 0"></div>`;
+      html += custom.map(s => `
+        <div class="src-row">
+          <input type="checkbox" id="chk-${s.key}" ${s.enabled!==false?'checked':''}
+                 onchange="onSourceToggle('${s.key}', this.checked)">
+          <label for="chk-${s.key}">${s.name}</label>
+          <button class="src-del" onclick="removeCustomSource('${s.key}')" title="Remove">×</button>
+        </div>`).join('');
+    }
+    html += `<div style="border-top:1px solid #1a3a6e;margin:8px 0 0"></div>`;
+    html += `<label class="src-reverse"><input type="checkbox" ${showReverse?'checked':''} onchange="toggleReversePlume()">${T().reverseToggle}</label>`;
+    html += `<button class="src-add" onclick="openCustomSourceForm()">${T().csAddBtn}</button>`;
+    html += `<a class="src-suggest" href="https://github.com/vredeling/smell-tracker/issues/new?title=Suggest+smell+source" target="_blank" rel="noopener">${T().csSuggest}</a>`;
+    document.getElementById('sources-panel').innerHTML = html;
   }
 
   function toggleSourcesPanel() {
@@ -396,15 +671,20 @@
   // ═══════════════════════════════════════════════════════════════════
   // DRAW
   // ═══════════════════════════════════════════════════════════════════
-  function drawCones(windFrom, ws) {
+  function drawCones(windFrom, ws, forecast = false) {
     coneLayers.forEach(l => map.removeLayer(l));
     coneLayers = [];
     SOURCES.filter(s => s.enabled).forEach(s => {
       coneLayers.push(L.polygon(coneLatLngs(s.lat,s.lng,windFrom,ws), {
-        color:s.color, weight:1.5, opacity:.7,
-        fillColor:s.color, fillOpacity:.18, interactive:false
+        color:s.color, weight:1.5,
+        opacity:    forecast ? 0.5 : 0.7,
+        fillColor:  s.color,
+        fillOpacity:forecast ? 0.08 : 0.18,
+        dashArray:  forecast ? '8 6' : null,
+        interactive:false
       }).addTo(map));
     });
+    drawReversePlume(windFrom, ws);
   }
 
   function drawArrow(windFrom) {
@@ -416,6 +696,24 @@
       [[loc.lat,loc.lng],[loc.lat+Math.cos(rad)*len, loc.lng+Math.sin(rad)*len/cosLat]],
       {color:'#fff',weight:2,opacity:.5,dashArray:'5 4'}
     ).addTo(map);
+  }
+
+  function toggleReversePlume() {
+    showReverse = !showReverse;
+    buildSourcesPanel();
+    if (lastWind) drawReversePlume(lastWind.dir, lastWind.spd);
+  }
+
+  function drawReversePlume(windFrom, ws) {
+    if (reversePlume) { map.removeLayer(reversePlume); reversePlume = null; }
+    if (!showReverse || !loc) return;
+    // Cone points upwind from user (windFrom direction = where wind comes from)
+    const latlngs = coneLatLngs(loc.lat, loc.lng, (windFrom + 180) % 360, ws);
+    reversePlume = L.polygon(latlngs, {
+      color: '#aaaaaa', weight: 2.5, opacity: 1,
+      fillColor: '#aaaaaa', fillOpacity: 0.25,
+      dashArray: '6 5', interactive: false
+    }).addTo(map);
   }
 
   // ═══════════════════════════════════════════════════════════════════
@@ -434,7 +732,7 @@
 
   function easeInOut(t) { return t<0.5 ? 2*t*t : -1+(4-2*t)*t; }
 
-  function animateTo(target, onDone) {
+  function animateTo(target, onDone, forecast = false) {
     if (animFrame) cancelAnimationFrame(animFrame);
     const from  = displayWind ? {...displayWind} : {...target};
     const start = performance.now();
@@ -443,7 +741,7 @@
       const t = Math.min((now-start)/dur, 1);
       const w = lerpWind(from, target, easeInOut(t));
       displayWind = w;
-      drawCones(w.dir, w.spd);
+      drawCones(w.dir, w.spd, forecast);
       if (loc) drawArrow(w.dir);
       updateWindWidget(w.dir, w.spd);
       if (t < 1) {
@@ -456,61 +754,113 @@
     animFrame = requestAnimationFrame(frame);
   }
 
+  // Animate by interpolating through step space so the rotation always
+  // follows the actual data path — no angular shortcuts across hourly gaps.
+  function animateSteps(toStep, onDone) {
+    if (animFrame) cancelAnimationFrame(animFrame);
+    const fromStep = displayStep;
+    const start    = performance.now();
+    const dur      = 600;
+    function frame(now) {
+      const t    = Math.min((now-start)/dur, 1);
+      const step = fromStep + (toStep - fromStep) * easeInOut(t);
+      displayStep = step;
+      const w    = getWindAtStep(step);
+      displayWind = w;
+      drawCones(w.dir, w.spd, step < 0);
+      if (loc) drawArrow(w.dir);
+      updateWindWidget(w.dir, w.spd);
+      if (t < 1) {
+        animFrame = requestAnimationFrame(frame);
+      } else {
+        animFrame = null;
+        if (onDone) onDone();
+      }
+    }
+    animFrame = requestAnimationFrame(frame);
+  }
+
   // ═══════════════════════════════════════════════════════════════════
   // WIND INTERPOLATION ACROSS HISTORY
   // ═══════════════════════════════════════════════════════════════════
   function getWindAtStep(step) {
-    // step 0=now (half-hourly steps), windHistory is hourly: [now, -1h, -2h, -3h]
-    const hourIdx = Math.floor(step / 2);
-    const frac    = (step % 2) / 2;
-    const a = windHistory[Math.min(hourIdx,   windHistory.length-1)];
-    const b = windHistory[Math.min(hourIdx+1, windHistory.length-1)];
-    return lerpWind(a, b, frac);
+    if (step >= 0) {
+      // Past or now: step 0=now, step 2=-1h, step 16=-8h
+      const hourIdx = Math.floor(step / 2);
+      const frac    = (step % 2) / 2;
+      const a = windPast[Math.min(hourIdx,   windPast.length - 1)];
+      const b = windPast[Math.min(hourIdx+1, windPast.length - 1)];
+      return lerpWind(a, b, frac);
+    } else {
+      // Future: step -1=+30min, step -2=+1h, step -16=+8h
+      const abs      = -step;
+      const hourIdx  = Math.floor(abs / 2);
+      const frac     = (abs % 2) / 2;
+      const a = hourIdx === 0 ? windPast[0] : windFuture[Math.min(hourIdx - 1, windFuture.length - 1)];
+      const b = windFuture[Math.min(hourIdx, windFuture.length - 1)];
+      return lerpWind(a, b, frac);
+    }
   }
 
   // ═══════════════════════════════════════════════════════════════════
   // ANALYSE
   // ═══════════════════════════════════════════════════════════════════
-  function analyse(windFrom, ws) {
+  function analyse(windFrom, ws, forecast = false) {
     lastWind    = {dir:windFrom, spd:ws};
     displayWind = {dir:windFrom, spd:ws};
-    drawCones(windFrom, ws);
-    drawArrow(windFrom);
+    drawCones(windFrom, ws, forecast);
+    if (loc) drawArrow(windFrom);
     updateWindWidget(windFrom, ws);
 
-    const up   = SOURCES.filter(s => s.enabled && isUpwind(s.lat,s.lng,loc.lat,loc.lng,windFrom,ws));
     const ha   = halfAngle(ws);
-    const meta = `<span style="color:#556;font-size:.78rem"> · ${T().windmeta(dname(windFrom),windFrom,parseFloat(ws).toFixed(1),ha)}</span>`;
+    const meta = `<span style="color:rgba(255,255,255,.5);font-size:.78rem"> · ${T().windmeta(dname(windFrom),windFrom,parseFloat(ws).toFixed(1),ha)}</span>`;
 
-    if (up.length===0) {
-      setBar(`<span style="color:#badc58;font-weight:600">${T().none}</span> ${T().nonedetail}${meta}`);
-    } else if (up.length===1) {
+    if (!loc) {
+      setBar(`${T().init}${meta}`);
+      return;
+    }
+
+    const up   = SOURCES.filter(s => s.enabled && isUpwind(s.lat,s.lng,loc.lat,loc.lng,windFrom,ws));
+    const near = SOURCES.filter(s => s.enabled && !up.includes(s) && isUpwindWide(s.lat,s.lng,loc.lat,loc.lng,windFrom,ws));
+    const cb   = forecast ? '' : complaintBtn();
+    const nearNote = near.length > 0
+      ? ` <span style="color:#aaa;font-size:.8rem">${T().sourceAlso} ${near.map(s=>`<span style="color:${s.color}">${s.name}</span>`).join(', ')}</span>`
+      : '';
+
+    if (up.length===1) {
       const s=up[0];
-      setBar(`<span style="color:${s.color};font-weight:600">${s.name}</span> ${T().source} <em>${getSmell(s)}</em>.${meta}${complaintBtn()}`);
-    } else {
+      setBar(`<span style="color:${s.color};font-weight:600">${s.name}</span> ${T().source} <em>${getSmell(s)}</em>.${nearNote}${meta}${cb}`);
+    } else if (up.length>1) {
       const names  = up.map(s=>`<span style="color:${s.color};font-weight:600">${s.name}</span>`).join(', ');
       const smells = [...new Set(up.map(s=>getSmell(s)))].join(' / ');
-      setBar(`<span style="color:#ff7979;font-weight:600">${T().multi}</span> ${names} — ${T().multimix} <em>${smells}</em>.${meta}${complaintBtn()}`);
+      setBar(`<span style="color:#d82a66;font-weight:600">${T().multi}</span> ${names} — ${T().multimix} <em>${smells}</em>.${nearNote}${meta}${cb}`);
+    } else if (near.length>0) {
+      const names = near.map(s=>`<span style="color:${s.color};font-weight:600">${s.name}</span>`).join(', ');
+      setBar(`${names} ${T().sourceNear}.${meta}${cb}`);
+    } else {
+      setBar(`<span style="font-weight:600">${T().none}</span> ${T().nonedetail}${meta}`);
     }
   }
 
   function analyseStep(step) {
     const w = getWindAtStep(step);
-    analyse(w.dir, w.spd);
+    analyse(w.dir, w.spd, step < 0);
   }
 
   // ═══════════════════════════════════════════════════════════════════
   // WIND FETCH (current + 3h history)
   // ═══════════════════════════════════════════════════════════════════
   async function loadWind() {
-    if (!loc) return;
-    setBar(`<em style="color:#aaa">${T().windfetch(loc.name)}</em>`);
+    const fetchLat  = loc ? loc.lat  : 52.4;
+    const fetchLng  = loc ? loc.lng  : 4.9;
+    const fetchName = loc ? loc.name : 'Westpoort';
+    setBar(`<em style="color:#aaa">${T().windfetch(fetchName)}</em>`);
     try {
       const ctrl    = new AbortController();
       const timeout = setTimeout(()=>ctrl.abort(), 8000);
       const res = await fetch(
         `https://api.open-meteo.com/v1/forecast` +
-        `?latitude=${loc.lat}&longitude=${loc.lng}` +
+        `?latitude=${fetchLat}&longitude=${fetchLng}` +
         `&current=wind_speed_10m,wind_direction_10m` +
         `&hourly=wind_speed_10m,wind_direction_10m` +
         `&wind_speed_unit=ms&past_days=1&forecast_days=1`,
@@ -523,36 +873,37 @@
       const ws = d?.current?.wind_speed_10m;
       if (typeof wd!=='number'||typeof ws!=='number') throw new Error('Onverwacht API-antwoord');
 
-      // Build wind history from hourly data: [now, -1h, -2h, -3h]
-      const times = d.hourly.time;           // ISO strings
+      // Build wind history and forecast from hourly data
+      const times = d.hourly.time;
       const hdirs = d.hourly.wind_direction_10m;
       const hspds = d.hourly.wind_speed_10m;
       const now   = new Date();
-      // find index of current hour
       let ci = times.length - 1;
       for (let i=0; i<times.length; i++) {
         if (new Date(times[i]) > now) { ci = Math.max(0, i-1); break; }
       }
-      windHistory = [];
-      windHistory.push({dir:wd, spd:ws}); // step 0 = live current reading
-      for (let h=1; h<=3; h++) {
+      windPast = [{dir:wd, spd:ws}]; // index 0 = live current
+      for (let h=1; h<=8; h++) {
         const idx = ci - h;
-        if (idx >= 0) {
-          windHistory.push({dir:hdirs[idx], spd:hspds[idx]});
-        } else {
-          windHistory.push({...windHistory[windHistory.length-1]}); // repeat if not available
-        }
+        windPast.push(idx >= 0 ? {dir:hdirs[idx], spd:hspds[idx]} : {...windPast[windPast.length-1]});
+      }
+      windFuture = [];
+      for (let h=1; h<=8; h++) {
+        const idx = ci + h;
+        const fallback = windFuture.length ? windFuture[windFuture.length-1] : {dir:wd, spd:ws};
+        windFuture.push(idx < hdirs.length ? {dir:hdirs[idx], spd:hspds[idx]} : {...fallback});
       }
 
-      // Reset slider to "now"
+      // Reset slider to "now" (center)
       currentStep = 0;
+      displayStep = 0;
       const range = document.getElementById('time-range');
-      if (range) range.value = STEPS; // rightmost = now
+      if (range) range.value = FUTURE_STEPS; // center = now
       showSlider();
       updateSliderLabel(0);
       analyse(wd, ws);
     } catch(e) {
-      setBar(`<span style="color:#e94560">${T().windfail(e.name==='AbortError'?'Timeout':e.message)}</span>`);
+      setBar(`<span style="color:#d82a66">${T().windfail(e.name==='AbortError'?'Timeout':e.message)}</span>`);
     }
   }
 
@@ -560,13 +911,12 @@
   // SLIDER EVENT
   // ═══════════════════════════════════════════════════════════════════
   document.getElementById('time-range').addEventListener('input', function() {
-    const step = STEPS - parseInt(this.value); // invert: right=now, left=past
-    const prev = currentStep;
+    // slider left=past, center=now, right=future
+    const step = FUTURE_STEPS - parseInt(this.value);
     currentStep = step;
     updateSliderLabel(step);
-    if (windHistory.length === 0) return;
-    const target = getWindAtStep(step);
-    animateTo(target, () => analyseStep(step));
+    if (windPast.length === 0) return;
+    animateSteps(step, () => analyseStep(step));
   });
 
   // ═══════════════════════════════════════════════════════════════════
@@ -575,11 +925,11 @@
   function updateUser() {
     if (!loc) return;
     if (!userMarker) {
-      userMarker = L.marker([loc.lat,loc.lng],{icon:circleIcon('#e94560',14),zIndexOffset:1000}).addTo(map);
+      userMarker = L.marker([loc.lat,loc.lng],{icon:circleIcon('#d82a66',14),zIndexOffset:1000}).addTo(map);
     } else {
       userMarker.setLatLng([loc.lat,loc.lng]);
     }
-    userMarker.setPopupContent(`<b style="color:#e94560">${loc.name}</b>`);
+    userMarker.setPopupContent(`<b style="color:#d82a66">${loc.name}</b>`);
     map.panTo([loc.lat,loc.lng]);
   }
 
@@ -597,19 +947,19 @@
       loc = {lat:parseFloat(data[0].lat), lng:parseFloat(data[0].lon), name:data[0].display_name};
       updateUser(); await loadWind();
     } catch(e) {
-      setBar(`<span style="color:#e94560">${T().notfound(e.message)}</span>`);
+      setBar(`<span style="color:#d82a66">${T().notfound(e.message)}</span>`);
     }
   }
 
   function doGeo() {
-    if (!navigator.geolocation) { setBar(`<span style="color:#e94560">${T().geonosup}</span>`); return; }
+    if (!navigator.geolocation) { setBar(`<span style="color:#d82a66">${T().geonosup}</span>`); return; }
     setBar(`<em style="color:#aaa">${T().locating}</em>`);
     navigator.geolocation.getCurrentPosition(
       async p => {
         loc = {lat:p.coords.latitude, lng:p.coords.longitude, name:T().gpsloc};
         updateUser(); await loadWind();
       },
-      () => setBar(`<span style="color:#e94560">${T().geodenied}</span>`)
+      () => setBar(`<span style="color:#d82a66">${T().geodenied}</span>`)
     );
   }
 
@@ -617,6 +967,13 @@
   // MAP CLICK
   // ═══════════════════════════════════════════════════════════════════
   map.on('click', async e => {
+    if (pickingSourceLocation) {
+      csLat = e.latlng.lat; csLng = e.latlng.lng;
+      cancelPickLocation();
+      document.getElementById('cs-loc-display').textContent = `${csLat.toFixed(4)}, ${csLng.toFixed(4)}`;
+      document.getElementById('cs-overlay').classList.add('open');
+      return;
+    }
     loc = {lat:e.latlng.lat, lng:e.latlng.lng, name:`${e.latlng.lat.toFixed(4)}, ${e.latlng.lng.toFixed(4)}`};
     updateUser(); await loadWind();
   });
@@ -626,12 +983,23 @@
   // LANGUAGE
   // ═══════════════════════════════════════════════════════════════════
   function applyLang() {
-    document.getElementById('t-title').textContent  = T().title;
+    document.getElementById('t-title').innerHTML = T().title
+      .replace(/(Stank|Stench)/, '<span class="title-stank">$1</span>')
+      .replace(/-tracker/, '<span class="title-tracker">-tracker</span>');
     document.getElementById('qry').placeholder       = T().placeholder;
     document.getElementById('t-search').textContent  = T().search;
     document.getElementById('t-geo').textContent     = T().geo;
     document.getElementById('lang-btn').textContent    = lang.toUpperCase();
     document.getElementById('sources-btn').textContent = T().sources;
+    document.getElementById('ab-title').textContent  = T().aboutTitle;
+    document.getElementById('ab-body1').textContent  = T().aboutBody1;
+    document.getElementById('ab-body2').textContent  = T().aboutBody2;
+    document.getElementById('ab-body3').textContent  = T().aboutBody3;
+    document.getElementById('about-close').textContent = T().aboutClose;
+    applyLangCustomForm();
+    buildSourcesPanel();
+    const banner = document.getElementById('pick-banner');
+    if (banner.style.display !== 'none') banner.textContent = T().csPickBanner;
     const d = tDirs();
     document.getElementById('wi-n').textContent = d[0];
     document.getElementById('wi-s').textContent = d[8];
@@ -640,6 +1008,9 @@
     buildSliderTicks();
     updateSliderLabel(currentStep);
   }
+
+  function openAbout()  { document.getElementById('about-overlay').classList.add('open'); }
+  function closeAbout() { document.getElementById('about-overlay').classList.remove('open'); }
 
   function toggleLang() {
     lang = lang==='nl' ? 'en' : 'nl';
@@ -654,9 +1025,9 @@
   // ═══════════════════════════════════════════════════════════════════
   try {
     const manifest = {
-      name:'Amsterdam Geurtracker', short_name:'Geurtracker',
+      name:'Amsterdam Stank-tracker', short_name:'Stank-tracker',
       start_url:'.', display:'standalone',
-      background_color:'#1a1a2e', theme_color:'#16213e',
+      background_color:'#121753', theme_color:'#121753',
       icons:[{src:"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌬️</text></svg>",sizes:'any',type:'image/svg+xml'}]
     };
     document.getElementById('manifest-link').href =
@@ -667,8 +1038,13 @@
   // INIT
   // ═══════════════════════════════════════════════════════════════════
   buildSourcesPanel();
+  loadCustomSources();
   applyLang();
+  loadWind();
   setBar(T().init);
+
+  document.getElementById('cs-overlay').addEventListener('click', e => { if (e.target === e.currentTarget) closeCustomSourceForm(); });
+  document.getElementById('about-overlay').addEventListener('click', e => { if (e.target === e.currentTarget) closeAbout(); });
 </script>
 </body>
 </html>
