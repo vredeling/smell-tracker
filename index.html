@@ -20,8 +20,7 @@
     *{box-sizing:border-box;margin:0;padding:0}
     html,body{height:100%;font-family:'Spline Sans',system-ui,sans-serif;background:#f2f3f5;color:#121753;display:flex;flex-direction:column}
     #hdr{padding:10px 14px;background:#fff;border-bottom:2px solid #e0e3ea;display:flex;gap:8px;align-items:center;flex-wrap:wrap;z-index:1000}
-    #hdr-logo{height:46px;margin:-5px 0;width:auto;flex-shrink:0}
-    #hdr strong{white-space:nowrap;font-family:'Rosario',serif;font-weight:800;font-size:1rem;text-transform:uppercase}
+#hdr strong{white-space:nowrap;font-family:'Rosario',serif;font-weight:800;font-size:1rem;text-transform:uppercase}
     #hdr strong .title-stank{color:#121753}
     #hdr strong .title-tracker{color:#5377db}
     #qry{flex:1;min-width:160px;padding:6px 12px;border-radius:4px;border:1px solid #d1d5db;background:#f2f3f5;color:#121753;font-size:.83rem;outline:none;font-family:'Spline Sans',sans-serif}
@@ -93,11 +92,7 @@
 <body>
 
 <div id="hdr">
-  <img id="hdr-logo" fetchpriority="high" decoding="async" alt="Adem Vrij aan het IJ logo"
-    src="https://ademvrijaanhetij.nl/wp-content/uploads/2024/12/Logos-Adem-vrij-aan-het-IJ-RGB_Hoofd-logo-400x204.webp"
-    srcset="https://ademvrijaanhetij.nl/wp-content/uploads/2024/12/Logos-Adem-vrij-aan-het-IJ-RGB_Hoofd-logo-200x102.webp 200w, https://ademvrijaanhetij.nl/wp-content/uploads/2024/12/Logos-Adem-vrij-aan-het-IJ-RGB_Hoofd-logo-400x204.webp 400w, https://ademvrijaanhetij.nl/wp-content/uploads/2024/12/Logos-Adem-vrij-aan-het-IJ-RGB_Hoofd-logo-600x307.webp 600w"
-    sizes="80px">
-  <strong id="t-title"><span class="title-stank">Stank</span><span class="title-tracker">-tracker</span></strong>
+  <strong id="t-title">🌬️ <span class="title-stank">Stank</span><span class="title-tracker">-tracker</span></strong>
   <input id="qry" placeholder="Voer een adres in…"/>
   <button class="btn" style="background:#d82a66;color:#fff" onclick="doSearch()" id="t-search">Zoeken</button>
   <button class="btn" style="background:#d82a66;color:#fff" onclick="doGeo()" id="t-geo">📍 Mijn locatie</button>
@@ -153,7 +148,7 @@
   // ═══════════════════════════════════════════════════════════════════
   const LANG = {
     nl: {
-      title:       'Stank-tracker',
+      title:       '🌬️ Stank-tracker',
       placeholder: 'Voer een adres in…',
       search:      'Zoeken',
       geo:         '📍 Mijn locatie',
@@ -165,9 +160,9 @@
       notfound:    e => `⚠️ Locatie niet gevonden: ${e}`,
       windfetch:   n => `⏳ Winddata ophalen voor ${n}…`,
       windfail:    e => `⚠️ Winddata ophalen mislukt: ${e} — <a href="#" onclick="loadWind();return false" style="color:#8aa9ff">Opnieuw</a>`,
-      none:        '✅ Geen van de bekende bronnen staat direct bovenstrooms.',
+      none:        '✅ Geen van de bekende bronnen staat direct bovenwinds.',
       nonedetail:  'De stank heeft mogelijk een andere oorzaak, of de wind is recent gedraaid.',
-      multi:       '⚠️ Meerdere bronnen bovenstrooms:',
+      multi:       '⚠️ Meerdere bronnen bovenwinds:',
       multimix:    'mogelijk een mengeling van',
       source:      'is de meest waarschijnlijke bron — verwacht een geur van',
       sourceNear:  'staat mogelijk op de rand van de pluim — stank kan soms waarneembaar zijn',
@@ -182,7 +177,7 @@
       dirs: ['N','NNO','NO','ONO','O','OZO','ZO','ZZO','Z','ZZW','ZW','WZW','W','WNW','NW','NNW'],
       east: 'O',
       aboutTitle: 'Over deze app',
-      aboutBody1: 'De Amsterdam Stank-tracker is een hulpmiddel om te beoordelen of een industriële bron in de buurt mogelijk de oorzaak is van een stank die je ruikt. De app combineert jouw locatie met actuele winddata om een verspreiding te schatten.',
+      aboutBody1: 'De Amsterdam Stank-tracker is slechts een hulpmiddel om te beoordelen of een industriële bron in de buurt mogelijk de oorzaak is van een stank die je ruikt. De app combineert jouw locatie met actuele winddata om een verspreiding te schatten.',
       aboutBody2: 'De resultaten zijn indicatief. De pluim is gebaseerd op de Briggs σy-formule (3σ-grens) en toont de zone waar stank waarneembaar kan zijn. Valt jouw locatie binnen de pluim, dan wordt de bijbehorende bron als meest waarschijnlijke oorzaak aangemerkt. Het model houdt geen rekening met alle verspreidingsfactoren. Er kunnen geen rechten aan de uitkomsten worden ontleend.',
       aboutBody3: 'Is er sprake van stankoverlast? Gebruik de knop "📢 Meld overlast" om een officiële klacht in te dienen bij de bevoegde instantie.',
       aboutClose: 'Sluiten',
@@ -203,7 +198,7 @@
       reverseToggle: '🔍 Waar kan de stank vandaan komen?'
     },
     en: {
-      title:       'Stench-tracker',
+      title:       '🌬️ Stench-tracker',
       placeholder: 'Enter an address…',
       search:      'Search',
       geo:         '📍 My Location',
@@ -232,7 +227,7 @@
       dirs: ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'],
       east: 'E',
       aboutTitle: 'About this app',
-      aboutBody1: 'Amsterdam Stench-tracker is a tool to help assess whether a nearby industrial source may be responsible for a stench you notice. It combines your location with live wind data to estimate atmospheric dispersion.',
+      aboutBody1: 'Amsterdam Stench-tracker is just a tool to help assess whether a nearby industrial source may be responsible for a stench you notice. It combines your location with live wind data to estimate atmospheric dispersion.',
       aboutBody2: 'Results are indicative only. The plume is based on the Briggs σy formula (3σ boundary) and shows the zone where stench may be perceptible. If your location falls within a plume, that source is flagged as the most likely cause. The model does not account for all dispersion factors. No rights can be derived from the outcomes.',
       aboutBody3: 'Experiencing stench nuisance? Use the "📢 Report complaint" button to file an official report with the competent authority.',
       aboutClose: 'Close',
