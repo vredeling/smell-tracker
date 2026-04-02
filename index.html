@@ -314,6 +314,7 @@
   let showReverse   = false;
   let lastWind      = null;
   let loc           = null;
+  let windFetchedAt = 0;
 
   // ═══════════════════════════════════════════════════════════════════
   // TIME SLIDER
@@ -751,14 +752,14 @@
 
   // Animate by interpolating through step space so the rotation always
   // follows the actual data path — no angular shortcuts across hourly gaps.
-  function animateSteps(toStep, onDone) {
+  function animateSteps(toStep, onDone, dur = 600) {
     if (animFrame) cancelAnimationFrame(animFrame);
     const fromStep = displayStep;
     const start    = performance.now();
-    const dur      = 600;
+    const ease     = dur < 300 ? t => t : easeInOut; // linear for short scrub, eased for big jumps
     function frame(now) {
       const t    = Math.min((now-start)/dur, 1);
-      const step = fromStep + (toStep - fromStep) * easeInOut(t);
+      const step = fromStep + (toStep - fromStep) * ease(t);
       displayStep = step;
       const w    = getWindAtStep(step);
       displayWind = w;
@@ -846,9 +847,9 @@
   // WIND FETCH (current + 3h history)
   // ═══════════════════════════════════════════════════════════════════
   async function loadWind() {
-    const fetchLat  = loc ? loc.lat  : 52.4;
-    const fetchLng  = loc ? loc.lng  : 4.9;
-    const fetchName = loc ? loc.name : 'Westpoort';
+    const fetchLat  = 52.4;
+    const fetchLng  = 4.9;
+    const fetchName = 'Westpoort';
     setBar(`<em style="color:#aaa">${T().windfetch(fetchName)}</em>`);
     try {
       const ctrl    = new AbortController();
@@ -894,6 +895,7 @@
       displayStep = 0;
       const range = document.getElementById('time-range');
       if (range) range.value = FUTURE_STEPS; // center = now
+      windFetchedAt = Date.now();
       showSlider();
       updateSliderLabel(0);
       analyse(wd, ws);
@@ -911,7 +913,7 @@
     currentStep = step;
     updateSliderLabel(step);
     if (windPast.length === 0) return;
-    animateSteps(step, () => analyseStep(step));
+    animateSteps(step, () => analyseStep(step), 150);
   });
 
   // ═══════════════════════════════════════════════════════════════════
@@ -940,7 +942,8 @@
       const data = await res.json();
       if (!data.length) throw new Error('—');
       loc = {lat:parseFloat(data[0].lat), lng:parseFloat(data[0].lon), name:data[0].display_name};
-      updateUser(); await loadWind();
+      updateUser();
+      if (windPast.length > 0) analyseStep(currentStep); else await loadWind();
     } catch(e) {
       setBar(`<span style="color:#d82a66">${T().notfound(e.message)}</span>`);
     }
@@ -952,7 +955,8 @@
     navigator.geolocation.getCurrentPosition(
       async p => {
         loc = {lat:p.coords.latitude, lng:p.coords.longitude, name:T().gpsloc};
-        updateUser(); await loadWind();
+        updateUser();
+        if (windPast.length > 0) analyseStep(currentStep); else await loadWind();
       },
       () => setBar(`<span style="color:#d82a66">${T().geodenied}</span>`)
     );
@@ -970,7 +974,8 @@
       return;
     }
     loc = {lat:e.latlng.lat, lng:e.latlng.lng, name:`${e.latlng.lat.toFixed(4)}, ${e.latlng.lng.toFixed(4)}`};
-    updateUser(); await loadWind();
+    updateUser();
+    if (windPast.length > 0) analyseStep(currentStep); else await loadWind();
   });
   document.getElementById('qry').addEventListener('keydown', e => { if(e.key==='Enter') doSearch(); });
 
@@ -1036,6 +1041,7 @@
   loadCustomSources();
   applyLang();
   loadWind();
+  setInterval(loadWind, 60000); // refresh wind data every minute
   setBar(T().init);
 
   document.getElementById('cs-overlay').addEventListener('click', e => { if (e.target === e.currentTarget) closeCustomSourceForm(); });
