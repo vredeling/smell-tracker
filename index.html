@@ -56,10 +56,14 @@
     .src-row input[type=checkbox]{cursor:pointer;width:15px;height:15px;accent-color:#c4dd68;flex-shrink:0}
     #about-overlay{display:none;position:fixed;inset:0;background:rgba(18,23,83,.55);z-index:99999;align-items:center;justify-content:center}
     #about-overlay.open{display:flex}
-    #about-box{background:#fff;border:1px solid #e0e3ea;border-radius:16px;padding:24px 26px;max-width:420px;width:90%;font-size:.85rem;line-height:1.6;color:#3d4a7a;position:relative;box-shadow:0 8px 32px rgba(18,23,83,.2)}
+    #about-wrap{position:relative;max-width:420px;width:90%;max-height:90vh;display:flex}
+    #about-box{background:#fff;border:1px solid #e0e3ea;border-radius:16px;padding:24px 26px;width:100%;max-height:100%;overflow-y:auto;font-size:.85rem;line-height:1.6;color:#3d4a7a;box-shadow:0 8px 32px rgba(18,23,83,.2)}
     #about-box h2{color:#121753;font-size:1.05rem;margin-bottom:10px;font-family:'Spline Sans',sans-serif;font-weight:700}
     #about-box p{margin-bottom:10px}
     #about-box p:last-of-type{margin-bottom:16px}
+    #about-box a{color:#121753;text-decoration:underline}
+    #about-fade{position:absolute;left:1px;right:1px;bottom:1px;height:52px;border-radius:0 0 15px 15px;pointer-events:none;background:linear-gradient(to bottom,rgba(255,255,255,0) 0%,rgba(255,255,255,.95) 70%,#fff 100%);display:flex;align-items:flex-end;justify-content:center;padding-bottom:6px;color:#3d4a7a;font-size:1.1rem;line-height:1;opacity:1;transition:opacity .2s ease}
+    #about-wrap.at-bottom #about-fade{opacity:0}
     #about-close{display:block;width:100%;padding:8px;border-radius:4px;border:none;background:#121753;color:#fff;cursor:pointer;font-size:.85rem;font-weight:600;text-transform:uppercase;letter-spacing:.02em;font-family:'Spline Sans',sans-serif}
     #cs-overlay{display:none;position:fixed;inset:0;background:rgba(18,23,83,.55);z-index:99999;align-items:center;justify-content:center}
     #cs-overlay.open{display:flex}
@@ -131,12 +135,16 @@
   </div>
 </div>
 <div id="about-overlay">
-  <div id="about-box">
-    <h2 id="ab-title"></h2>
-    <p id="ab-body1"></p>
-    <p id="ab-body2"></p>
-    <p id="ab-body3"></p>
-    <button id="about-close" onclick="closeAbout()" id="ab-close"></button>
+  <div id="about-wrap">
+    <div id="about-box">
+      <h2 id="ab-title"></h2>
+      <p id="ab-body1"></p>
+      <p id="ab-body2"></p>
+      <p id="ab-body3"></p>
+      <p id="ab-body4"></p>
+      <button id="about-close" onclick="closeAbout()" id="ab-close"></button>
+    </div>
+    <div id="about-fade" aria-hidden="true">⌄</div>
   </div>
 </div>
 <div id="map"></div>
@@ -177,10 +185,11 @@
       dirs: ['N','NNO','NO','ONO','O','OZO','ZO','ZZO','Z','ZZW','ZW','WZW','W','WNW','NW','NNW'],
       east: 'O',
       aboutTitle: 'Over deze app',
-      aboutBody1: 'De Amsterdam Stank-tracker is slechts een hulpmiddel om te beoordelen of een industriële bron in de buurt mogelijk de oorzaak is van een stank die je ruikt. De app combineert jouw locatie met actuele winddata om een verspreiding te schatten.',
-      aboutBody2: 'De resultaten zijn indicatief. De pluim is gebaseerd op de Briggs σy-formule (3σ-grens) en toont de zone waar stank in elk geval waarneembaar kan zijn. Valt jouw locatie binnen de pluim, dan wordt de bijbehorende bron als meest waarschijnlijke oorzaak aangemerkt. Het model houdt geen rekening met alle verspreidingsfactoren. Er kunnen geen rechten aan de uitkomsten worden ontleend.',
-      aboutBody3: 'Is er sprake van stankoverlast? Gebruik de knop "📢 Meld overlast" om een officiële klacht in te dienen bij de bevoegde instantie.',
-      aboutClose: 'Sluiten',
+      aboutBody1: 'Welkom bij de StankTracker, ontwikkeld door buurman Bas uit Noord. Op de kaart zie je de richting waar stank van industrie momenteel vermoedelijk heen waait met de actuele windrichting. Let op: de StankTracker laat niet zien of een fabriek aan staat, en geeft ook geen zekerheid over wat je ruikt.',
+      aboutBody2: 'Meld stankhinder altijd bij de <a href="https://overlast.odnzkg.nl" target="_blank" rel="noopener noreferrer">Omgevingsdienst</a>, en omschrijf in je eigen woorden het soort stank dat je ruikt. Dit is belangrijk om te zorgen dat de Provincie streng handhaaft bij deze bedrijven.',
+      aboutBody3: 'De Amsterdam Stank-tracker is slechts een hulpmiddel om te beoordelen of een industriële bron in de buurt mogelijk de oorzaak is van een stank die je ruikt. De app combineert jouw locatie met actuele winddata om een verspreiding te schatten. De resultaten zijn louter indicatief. De pluim is gebaseerd op de Briggs σy-formule (3σ-grens) en toont de zone waar stank in elk geval waarneembaar kan zijn. Valt jouw locatie binnen de pluim, dan wordt de bijbehorende bron als meest waarschijnlijke oorzaak aangemerkt.',
+      aboutBody4: 'Het model houdt geen rekening met alle verspreidingsfactoren. Er kunnen geen rechten aan de uitkomsten worden ontleend. Adem Vrij aan het IJ is niet aansprakelijk voor de juistheid de via deze StankTracker weergegeven informatie.',
+      aboutClose: 'OK, helder',
       csTitle:       'Bron toevoegen',
       csName:        'Naam',
       csSmell:       'Stanktype (omschrijving)',
@@ -227,10 +236,11 @@
       dirs: ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'],
       east: 'E',
       aboutTitle: 'About this app',
-      aboutBody1: 'Amsterdam Stench-tracker is just a tool to help assess whether a nearby industrial source may be responsible for a stench you notice. It combines your location with live wind data to estimate atmospheric dispersion.',
-      aboutBody2: 'Results are indicative only. The plume is based on the Briggs σy formula (3σ boundary) and shows the zone where stench may at least be perceptible. If your location falls within a plume, that source is flagged as the most likely cause. The model does not account for all dispersion factors. No rights can be derived from the outcomes.',
-      aboutBody3: 'Experiencing stench nuisance? Use the "📢 Report complaint" button to file an official report with the competent authority.',
-      aboutClose: 'Close',
+      aboutBody1: 'Welcome to the StenchTracker, developed by your neighbour Bas from Noord. The map shows the direction in which industrial stench is currently likely drifting based on the actual wind direction. Please note: the StenchTracker does not show whether a factory is operating, nor does it give any certainty about what you are smelling.',
+      aboutBody2: 'Always report stench nuisance to the <a href="https://overlast.odnzkg.nl" target="_blank" rel="noopener noreferrer">Omgevingsdienst</a> (environmental authority), and describe the type of stench you smell in your own words. This is important to ensure the Province enforces strictly against these companies.',
+      aboutBody3: 'The Amsterdam Stench-tracker is only a tool to help assess whether a nearby industrial source may be the cause of a stench you notice. The app combines your location with current wind data to estimate dispersion. The results are purely indicative. The plume is based on the Briggs σy formula (3σ boundary) and shows the zone where stench may at least be perceptible. If your location falls within the plume, that source is flagged as the most likely cause.',
+      aboutBody4: 'The model does not account for all dispersion factors. No rights can be derived from the outcomes. Adem Vrij aan het IJ is not liable for the accuracy of the information shown via this StenchTracker.',
+      aboutClose: 'OK, clear',
       csTitle:       'Add source',
       csName:        'Name',
       csSmell:       'Stench type (description)',
@@ -992,9 +1002,10 @@
     document.getElementById('lang-btn').textContent    = lang.toUpperCase();
     document.getElementById('sources-btn').textContent = T().sources;
     document.getElementById('ab-title').textContent  = T().aboutTitle;
-    document.getElementById('ab-body1').textContent  = T().aboutBody1;
-    document.getElementById('ab-body2').textContent  = T().aboutBody2;
-    document.getElementById('ab-body3').textContent  = T().aboutBody3;
+    document.getElementById('ab-body1').innerHTML    = T().aboutBody1;
+    document.getElementById('ab-body2').innerHTML    = T().aboutBody2;
+    document.getElementById('ab-body3').innerHTML    = T().aboutBody3;
+    document.getElementById('ab-body4').innerHTML    = T().aboutBody4;
     document.getElementById('about-close').textContent = T().aboutClose;
     applyLangCustomForm();
     buildSourcesPanel();
@@ -1009,8 +1020,22 @@
     updateSliderLabel(currentStep);
   }
 
-  function openAbout()  { document.getElementById('about-overlay').classList.add('open'); }
-  function closeAbout() { document.getElementById('about-overlay').classList.remove('open'); }
+  function updateAboutFade() {
+    const box = document.getElementById('about-box');
+    const wrap = document.getElementById('about-wrap');
+    const atBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 4;
+    wrap.classList.toggle('at-bottom', atBottom);
+  }
+  function openAbout() {
+    document.getElementById('about-overlay').classList.add('open');
+    const box = document.getElementById('about-box');
+    box.scrollTop = 0;
+    requestAnimationFrame(updateAboutFade);
+  }
+  function closeAbout() {
+    document.getElementById('about-overlay').classList.remove('open');
+    try { localStorage.setItem('smellAboutSeen', '1'); } catch(e) {}
+  }
 
   function toggleLang() {
     lang = lang==='nl' ? 'en' : 'nl';
@@ -1046,6 +1071,10 @@
 
   document.getElementById('cs-overlay').addEventListener('click', e => { if (e.target === e.currentTarget) closeCustomSourceForm(); });
   document.getElementById('about-overlay').addEventListener('click', e => { if (e.target === e.currentTarget) closeAbout(); });
+  document.getElementById('about-box').addEventListener('scroll', updateAboutFade);
+  window.addEventListener('resize', updateAboutFade);
+
+  try { if (!localStorage.getItem('smellAboutSeen')) openAbout(); } catch(e) {}
 </script>
 </body>
 </html>
