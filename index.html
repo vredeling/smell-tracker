@@ -877,7 +877,7 @@
   // Optional PHP proxy that hides the paid Open-Meteo key and caches responses.
   // Leave empty to call Open-Meteo directly. On any proxy failure the app falls
   // back to the free public endpoint, so toggling this is safe.
-  const WIND_PROXY_URL = './api-key.php';
+  const WIND_PROXY_URL = './proxy/';
 
   async function loadWind() {
     const fetchLat  = 52.4;
