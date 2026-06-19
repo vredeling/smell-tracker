@@ -297,11 +297,29 @@
   // ═══════════════════════════════════════════════════════════════════
   // MAP
   // ═══════════════════════════════════════════════════════════════════
+  // MapTiler DataViz tiles. The key is safe to embed because it is
+  // domain-restricted at MapTiler (vredeling.github.io + ademvrijaanhetij.nl).
+  // If MapTiler is unreachable or quota is exhausted, fall back to OSM.
+  const MAPTILER_KEY = 'h2cR2jyxTK45moYFkG1X';
   const map = L.map('map').setView([52.4086, 4.9068], 12);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-    maxZoom:19
+  const maptilerLayer = L.tileLayer(`https://api.maptiler.com/maps/dataviz/{z}/{x}/{y}.png?key=${MAPTILER_KEY}`, {
+    attribution:'&copy; <a href="https://www.maptiler.com/copyright/">MapTiler</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    maxZoom:22,
+    tileSize:512,
+    zoomOffset:-1,
+    crossOrigin:true
   }).addTo(map);
+
+  let tileErrors = 0, tilesFellBack = false;
+  maptilerLayer.on('tileerror', () => {
+    if (tilesFellBack || ++tileErrors < 3) return;
+    tilesFellBack = true;
+    map.removeLayer(maptilerLayer);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom:19
+    }).addTo(map);
+  });
 
   function circleIcon(color, size) {
     return L.divIcon({
