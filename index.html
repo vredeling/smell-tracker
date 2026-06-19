@@ -547,7 +547,19 @@
   // ═══════════════════════════════════════════════════════════════════
   // CUSTOM SOURCES
   // ═══════════════════════════════════════════════════════════════════
-  const CUSTOM_COLORS = ['#e4940d','#27ae60','#3498db','#8834cc','#ca1e66','#0ccbde'];
+  // Picked to stay clear of the built-in source colors (ICL #e4940d, BUNGE
+  // #0ccbde, AEB #8834cc, BENZINE #ca1e66) and the user marker (#d82a66),
+  // and to maximise mutual contrast.
+  const CUSTOM_COLORS = [
+    '#e74c3c',
+    '#f1c40f',
+    '#27ae60',
+    '#16a085',
+    '#3498db',
+    '#6c5ce7',
+    '#34495e',
+    '#7f8c8d'
+  ];
   let csLat = null, csLng = null, csColor = CUSTOM_COLORS[0];
   let pickingSourceLocation = false;
 
