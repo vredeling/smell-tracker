@@ -977,13 +977,28 @@
     if (!q) { setBar(T().init); return; }
     setBar(`<em style="color:#aaa">${T().searching(q)}</em>`);
     try {
-      const res  = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1&countrycodes=nl`,
-        {headers:{'Accept-Language':lang}}
-      );
-      const data = await res.json();
-      if (!data.length) throw new Error('—');
-      loc = {lat:parseFloat(data[0].lat), lng:parseFloat(data[0].lon), name:data[0].display_name};
+      let result = null;
+      try {
+        const r = await fetch(
+          `https://api.maptiler.com/geocoding/${encodeURIComponent(q)}.json` +
+          `?key=${MAPTILER_KEY}&country=nl&limit=1&language=${lang}`
+        );
+        if (r.ok) {
+          const d = await r.json();
+          const f = d.features?.[0];
+          if (f) result = {lat:f.center[1], lng:f.center[0], name:f.place_name};
+        }
+      } catch(_) { /* fall through to Nominatim */ }
+      if (!result) {
+        const r = await fetch(
+          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1&countrycodes=nl`,
+          {headers:{'Accept-Language':lang}}
+        );
+        const d = await r.json();
+        if (d.length) result = {lat:parseFloat(d[0].lat), lng:parseFloat(d[0].lon), name:d[0].display_name};
+      }
+      if (!result) throw new Error('—');
+      loc = result;
       updateUser();
       if (windPast.length > 0) analyseStep(currentStep); else await loadWind();
     } catch(e) {
