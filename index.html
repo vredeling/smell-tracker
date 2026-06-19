@@ -856,6 +856,11 @@
   // ═══════════════════════════════════════════════════════════════════
   // WIND FETCH (current + 3h history)
   // ═══════════════════════════════════════════════════════════════════
+  // Optional PHP proxy that hides the paid Open-Meteo key and caches responses.
+  // Leave empty to call Open-Meteo directly. On any proxy failure the app falls
+  // back to the free public endpoint, so toggling this is safe.
+  const WIND_PROXY_URL = './api-key.php';
+
   async function loadWind() {
     const fetchLat  = 52.4;
     const fetchLng  = 4.9;
@@ -864,14 +869,23 @@
     try {
       const ctrl    = new AbortController();
       const timeout = setTimeout(()=>ctrl.abort(), 8000);
-      const res = await fetch(
+      const directURL =
         `https://api.open-meteo.com/v1/forecast` +
         `?latitude=${fetchLat}&longitude=${fetchLng}` +
         `&current=wind_speed_10m,wind_direction_10m` +
         `&hourly=wind_speed_10m,wind_direction_10m` +
-        `&wind_speed_unit=ms&past_days=1&forecast_days=1`,
-        {signal:ctrl.signal}
-      );
+        `&wind_speed_unit=ms&past_hours=8&forecast_hours=8`;
+      let res = null;
+      if (WIND_PROXY_URL) {
+        try {
+          const proxyCtrl    = new AbortController();
+          const proxyTimeout = setTimeout(()=>proxyCtrl.abort(), 3000);
+          const r = await fetch(WIND_PROXY_URL, {signal:proxyCtrl.signal});
+          clearTimeout(proxyTimeout);
+          if (r.ok) res = r;
+        } catch(_) { /* fall through to direct */ }
+      }
+      if (!res) res = await fetch(directURL, {signal:ctrl.signal});
       clearTimeout(timeout);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const d  = await res.json();
